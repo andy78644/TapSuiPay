@@ -1,0 +1,3 @@
+# Ignore sensitive config files
+pay_nfc/Config.plist
+pay_nfc/pay_nfc/Config.plist

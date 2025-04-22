@@ -1,0 +1,737 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		69658BF7E385F5CC4DC0EC92 /* Pods_pay_nfc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2BEE3D4B7EE96611A7514CA2 /* Pods_pay_nfc.framework */; };
+		7280B1D62DB55FD500668990 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 7280B1D52DB55FD500668990 /* GoogleSignIn */; };
+		7280B1DA2DB55FED00668990 /* JWTDecode in Frameworks */ = {isa = PBXBuildFile; productRef = 7280B1D92DB55FED00668990 /* JWTDecode */; };
+		7280B2122DB5630300668990 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 7280B2112DB5630300668990 /* GoogleSignIn */; };
+		729C73172DB558D1001F45CB /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 729C73162DB558D1001F45CB /* GoogleSignInSwift */; };
+		729C731C2DB55DB3001F45CB /* JWTDecode in Frameworks */ = {isa = PBXBuildFile; productRef = 729C731B2DB55DB3001F45CB /* JWTDecode */; };
+		9CF61DA7ADCA15A3E0B43974 /* Pods_pay_nfcTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 91FF23F75D764586ACC01BF8 /* Pods_pay_nfcTests.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		725C97002DB27FAC00230E00 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 725C96EA2DB27FAA00230E00 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 725C96F12DB27FAA00230E00;
+			remoteInfo = pay_nfc;
+		};
+		725C970A2DB27FAC00230E00 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 725C96EA2DB27FAA00230E00 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 725C96F12DB27FAA00230E00;
+			remoteInfo = pay_nfc;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		005B07C36B4B2B41A6A34603 /* Pods-pay_nfc.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-pay_nfc.release.xcconfig"; path = "Target Support Files/Pods-pay_nfc/Pods-pay_nfc.release.xcconfig"; sourceTree = "<group>"; };
+		218890206FEC96063AADC79C /* Pods-pay_nfcTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-pay_nfcTests.release.xcconfig"; path = "Target Support Files/Pods-pay_nfcTests/Pods-pay_nfcTests.release.xcconfig"; sourceTree = "<group>"; };
+		2BEE3D4B7EE96611A7514CA2 /* Pods_pay_nfc.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_pay_nfc.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4994F28C50C2125B1A0BF0BB /* Pods-pay_nfc.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-pay_nfc.debug.xcconfig"; path = "Target Support Files/Pods-pay_nfc/Pods-pay_nfc.debug.xcconfig"; sourceTree = "<group>"; };
+		54ED45B68BCE97BE1618A123 /* Pods-pay_nfcTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-pay_nfcTests.debug.xcconfig"; path = "Target Support Files/Pods-pay_nfcTests/Pods-pay_nfcTests.debug.xcconfig"; sourceTree = "<group>"; };
+		725C96F22DB27FAA00230E00 /* pay_nfc.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = pay_nfc.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		725C96FF2DB27FAC00230E00 /* pay_nfcTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = pay_nfcTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		725C97092DB27FAC00230E00 /* pay_nfcUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = pay_nfcUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		91FF23F75D764586ACC01BF8 /* Pods_pay_nfcTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_pay_nfcTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		72DF04F12DB501D900A3E235 /* Exceptions for "pay_nfc" folder in "pay_nfc" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 725C96F12DB27FAA00230E00 /* pay_nfc */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		725C96F42DB27FAA00230E00 /* pay_nfc */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				72DF04F12DB501D900A3E235 /* Exceptions for "pay_nfc" folder in "pay_nfc" target */,
+			);
+			path = pay_nfc;
+			sourceTree = "<group>";
+		};
+		725C97022DB27FAC00230E00 /* pay_nfcTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = pay_nfcTests;
+			sourceTree = "<group>";
+		};
+		725C970C2DB27FAC00230E00 /* pay_nfcUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = pay_nfcUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		725C96EF2DB27FAA00230E00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7280B1DA2DB55FED00668990 /* JWTDecode in Frameworks */,
+				7280B1D62DB55FD500668990 /* GoogleSignIn in Frameworks */,
+				729C73172DB558D1001F45CB /* GoogleSignInSwift in Frameworks */,
+				729C731C2DB55DB3001F45CB /* JWTDecode in Frameworks */,
+				7280B2122DB5630300668990 /* GoogleSignIn in Frameworks */,
+				69658BF7E385F5CC4DC0EC92 /* Pods_pay_nfc.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		725C96FC2DB27FAC00230E00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CF61DA7ADCA15A3E0B43974 /* Pods_pay_nfcTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		725C97062DB27FAC00230E00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		68B21A0367D133B6233E39C3 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				4994F28C50C2125B1A0BF0BB /* Pods-pay_nfc.debug.xcconfig */,
+				005B07C36B4B2B41A6A34603 /* Pods-pay_nfc.release.xcconfig */,
+				54ED45B68BCE97BE1618A123 /* Pods-pay_nfcTests.debug.xcconfig */,
+				218890206FEC96063AADC79C /* Pods-pay_nfcTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		6FF8D95788751054FB21D0D7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2BEE3D4B7EE96611A7514CA2 /* Pods_pay_nfc.framework */,
+				91FF23F75D764586ACC01BF8 /* Pods_pay_nfcTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		725C96E92DB27FAA00230E00 = {
+			isa = PBXGroup;
+			children = (
+				725C96F42DB27FAA00230E00 /* pay_nfc */,
+				725C97022DB27FAC00230E00 /* pay_nfcTests */,
+				725C970C2DB27FAC00230E00 /* pay_nfcUITests */,
+				725C96F32DB27FAA00230E00 /* Products */,
+				68B21A0367D133B6233E39C3 /* Pods */,
+				6FF8D95788751054FB21D0D7 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		725C96F32DB27FAA00230E00 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				725C96F22DB27FAA00230E00 /* pay_nfc.app */,
+				725C96FF2DB27FAC00230E00 /* pay_nfcTests.xctest */,
+				725C97092DB27FAC00230E00 /* pay_nfcUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		725C96F12DB27FAA00230E00 /* pay_nfc */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 725C97132DB27FAC00230E00 /* Build configuration list for PBXNativeTarget "pay_nfc" */;
+			buildPhases = (
+				55EB310990313E77C48A048B /* [CP] Check Pods Manifest.lock */,
+				725C96EE2DB27FAA00230E00 /* Sources */,
+				725C96EF2DB27FAA00230E00 /* Frameworks */,
+				725C96F02DB27FAA00230E00 /* Resources */,
+				022014237638BECDB9991E43 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				725C96F42DB27FAA00230E00 /* pay_nfc */,
+			);
+			name = pay_nfc;
+			productName = pay_nfc;
+			productReference = 725C96F22DB27FAA00230E00 /* pay_nfc.app */;
+			productType = "com.apple.product-type.application";
+		};
+		725C96FE2DB27FAC00230E00 /* pay_nfcTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 725C97162DB27FAC00230E00 /* Build configuration list for PBXNativeTarget "pay_nfcTests" */;
+			buildPhases = (
+				7C5D7D4826D60511480FE4CB /* [CP] Check Pods Manifest.lock */,
+				725C96FB2DB27FAC00230E00 /* Sources */,
+				725C96FC2DB27FAC00230E00 /* Frameworks */,
+				725C96FD2DB27FAC00230E00 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				725C97012DB27FAC00230E00 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				725C97022DB27FAC00230E00 /* pay_nfcTests */,
+			);
+			name = pay_nfcTests;
+			productName = pay_nfcTests;
+			productReference = 725C96FF2DB27FAC00230E00 /* pay_nfcTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		725C97082DB27FAC00230E00 /* pay_nfcUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 725C97192DB27FAC00230E00 /* Build configuration list for PBXNativeTarget "pay_nfcUITests" */;
+			buildPhases = (
+				725C97052DB27FAC00230E00 /* Sources */,
+				725C97062DB27FAC00230E00 /* Frameworks */,
+				725C97072DB27FAC00230E00 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				725C970B2DB27FAC00230E00 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				725C970C2DB27FAC00230E00 /* pay_nfcUITests */,
+			);
+			name = pay_nfcUITests;
+			productName = pay_nfcUITests;
+			productReference = 725C97092DB27FAC00230E00 /* pay_nfcUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		725C96EA2DB27FAA00230E00 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					725C96F12DB27FAA00230E00 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					725C96FE2DB27FAC00230E00 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 725C96F12DB27FAA00230E00;
+					};
+					725C97082DB27FAC00230E00 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 725C96F12DB27FAA00230E00;
+					};
+				};
+			};
+			buildConfigurationList = 725C96ED2DB27FAA00230E00 /* Build configuration list for PBXProject "pay_nfc" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 725C96E92DB27FAA00230E00;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 725C96F32DB27FAA00230E00 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				725C96F12DB27FAA00230E00 /* pay_nfc */,
+				725C96FE2DB27FAC00230E00 /* pay_nfcTests */,
+				725C97082DB27FAC00230E00 /* pay_nfcUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		725C96F02DB27FAA00230E00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		725C96FD2DB27FAC00230E00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		725C97072DB27FAC00230E00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		022014237638BECDB9991E43 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-pay_nfc/Pods-pay_nfc-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-pay_nfc/Pods-pay_nfc-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-pay_nfc/Pods-pay_nfc-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		55EB310990313E77C48A048B /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-pay_nfc-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7C5D7D4826D60511480FE4CB /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-pay_nfcTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		725C96EE2DB27FAA00230E00 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		725C96FB2DB27FAC00230E00 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		725C97052DB27FAC00230E00 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		725C97012DB27FAC00230E00 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 725C96F12DB27FAA00230E00 /* pay_nfc */;
+			targetProxy = 725C97002DB27FAC00230E00 /* PBXContainerItemProxy */;
+		};
+		725C970B2DB27FAC00230E00 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 725C96F12DB27FAA00230E00 /* pay_nfc */;
+			targetProxy = 725C970A2DB27FAC00230E00 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		725C97112DB27FAC00230E00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		725C97122DB27FAC00230E00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		725C97142DB27FAC00230E00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4994F28C50C2125B1A0BF0BB /* Pods-pay_nfc.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = pay_nfc/pay_nfc.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZH38W74UNF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = pay_nfc/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sui.pay.nfc;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		725C97152DB27FAC00230E00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 005B07C36B4B2B41A6A34603 /* Pods-pay_nfc.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = pay_nfc/pay_nfc.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZH38W74UNF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = pay_nfc/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sui.pay.nfc;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		725C97172DB27FAC00230E00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 54ED45B68BCE97BE1618A123 /* Pods-pay_nfcTests.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "sui-pay.pay-nfcTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/pay_nfc.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/pay_nfc";
+			};
+			name = Debug;
+		};
+		725C97182DB27FAC00230E00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 218890206FEC96063AADC79C /* Pods-pay_nfcTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "sui-pay.pay-nfcTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/pay_nfc.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/pay_nfc";
+			};
+			name = Release;
+		};
+		725C971A2DB27FAC00230E00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "sui-pay.pay-nfcUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = pay_nfc;
+			};
+			name = Debug;
+		};
+		725C971B2DB27FAC00230E00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "sui-pay.pay-nfcUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = pay_nfc;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		725C96ED2DB27FAA00230E00 /* Build configuration list for PBXProject "pay_nfc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				725C97112DB27FAC00230E00 /* Debug */,
+				725C97122DB27FAC00230E00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		725C97132DB27FAC00230E00 /* Build configuration list for PBXNativeTarget "pay_nfc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				725C97142DB27FAC00230E00 /* Debug */,
+				725C97152DB27FAC00230E00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		725C97162DB27FAC00230E00 /* Build configuration list for PBXNativeTarget "pay_nfcTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				725C97172DB27FAC00230E00 /* Debug */,
+				725C97182DB27FAC00230E00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		725C97192DB27FAC00230E00 /* Build configuration list for PBXNativeTarget "pay_nfcUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				725C971A2DB27FAC00230E00 /* Debug */,
+				725C971B2DB27FAC00230E00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		722E6ADB2DB5563900F48949 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+		729C731A2DB55DB3001F45CB /* XCRemoteSwiftPackageReference "JWTDecode.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/auth0/JWTDecode.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7280B1D52DB55FD500668990 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 722E6ADB2DB5563900F48949 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		7280B1D92DB55FED00668990 /* JWTDecode */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 729C731A2DB55DB3001F45CB /* XCRemoteSwiftPackageReference "JWTDecode.swift" */;
+			productName = JWTDecode;
+		};
+		7280B2112DB5630300668990 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 722E6ADB2DB5563900F48949 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		729C73162DB558D1001F45CB /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 722E6ADB2DB5563900F48949 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		729C731B2DB55DB3001F45CB /* JWTDecode */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 729C731A2DB55DB3001F45CB /* XCRemoteSwiftPackageReference "JWTDecode.swift" */;
+			productName = JWTDecode;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 725C96EA2DB27FAA00230E00 /* Project object */;
+}
