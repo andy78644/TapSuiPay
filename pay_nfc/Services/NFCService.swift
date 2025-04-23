@@ -2,12 +2,13 @@ import Foundation
 import CoreNFC
 
 @available(iOS 13.0, *)
-class NFCService: NSObject, ObservableObject {
+class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     @Published var isScanning = false
     @Published var nfcMessage: String?
     @Published var transactionData: [String: String]?
     
     private var session: NFCNDEFReaderSession?
+    private var writePayload: String?
     
     func startScanning() {
         guard NFCNDEFReaderSession.readingAvailable else {
@@ -20,11 +21,20 @@ class NFCService: NSObject, ObservableObject {
         session?.begin()
         isScanning = true
     }
-}
+    // MARK: - NFC Writing
+    func startWriting(recipient: String, amount: String) {
+        guard NFCNDEFReaderSession.readingAvailable else {
+            self.nfcMessage = "NFC not available on this device"
+            return
+        }
+        let payloadString = "recipient=\(recipient)&amount=\(amount)"
+        writePayload = payloadString
+        session = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: false)
+        session?.alertMessage = "Hold your iPhone near the NFC tag to write transaction info"
+        session?.begin()
+        isScanning = true
+    }
 
-// MARK: - NFCNDEFReaderSessionDelegate
-
-extension NFCService: NFCNDEFReaderSessionDelegate {
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
         DispatchQueue.main.async {
             self.isScanning = false

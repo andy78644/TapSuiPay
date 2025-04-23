@@ -7,7 +7,7 @@ class TransactionViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isWalletConnected: Bool = false
     
-    private let nfcService: NFCService
+    let nfcService: NFCService
     private let zkLoginService: SUIZkLoginService
     private var cancellables = Set<AnyCancellable>()
     

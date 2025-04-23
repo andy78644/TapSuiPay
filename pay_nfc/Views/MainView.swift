@@ -4,7 +4,7 @@ struct MainView: View {
     @StateObject private var viewModel = TransactionViewModel()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 VStack(spacing: 30) {
                     // Logo and Header
@@ -31,24 +31,41 @@ struct MainView: View {
                     Spacer()
                     
                     // Action Button (Connect Wallet or Scan NFC)
+                    // Write & Scan NFC Tag Buttons
                     if viewModel.isWalletConnected {
-                        // Scan Button
-                        Button(action: {
-                            viewModel.startNFCScan()
-                        }) {
-                            HStack {
-                                Image(systemName: "wave.3.right")
-                                Text("Scan NFC Tag")
-                                    .fontWeight(.semibold)
+                        VStack(spacing: 16) {
+                            NavigationLink(destination: NFCWriteView(nfcService: viewModel.nfcService)) {
+                                HStack {
+                                    Image(systemName: "pencil.circle")
+                                    Text("Write to NFC Tag")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.orange)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .shadow(radius: 3)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                            .shadow(radius: 3)
+                            .padding(.horizontal, 40)
+
+                            Button(action: {
+                                viewModel.startNFCScan()
+                            }) {
+                                HStack {
+                                    Image(systemName: "wave.3.right")
+                                    Text("Scan NFC Tag")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .shadow(radius: 3)
+                            }
+                            .padding(.horizontal, 40)
                         }
-                        .padding(.horizontal, 40)
                     } else {
                         // Connect Wallet Button
                         Button(action: {

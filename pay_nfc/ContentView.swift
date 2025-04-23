@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = TransactionViewModel()
+    @State private var showNFCWrite = false
     
     var body: some View {
         NavigationView {
@@ -60,6 +61,26 @@ struct ContentView: View {
                             .shadow(radius: 3)
                         }
                         .padding(.horizontal, 40)
+                        // --- NFC Write Button ---
+                        Button(action: {
+                            showNFCWrite = true
+                        }) {
+                            HStack {
+                                Image(systemName: "pencil.circle")
+                                Text("Write NFC Tag")
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                            .shadow(radius: 3)
+                        }
+                        .padding(.horizontal, 40)
+                        .sheet(isPresented: $showNFCWrite) {
+                            NFCWriteView(nfcService: NFCService())
+                        }
                     } else {
                         // Connect Wallet Button
                         Button(action: {
