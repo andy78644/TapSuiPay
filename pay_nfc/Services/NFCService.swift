@@ -3,6 +3,9 @@ import CoreNFC
 
 @available(iOS 13.0, *)
 class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
+    func readerSessionDidBecomeActive(_ session: NFCNDEFReaderSession) {
+        // Optional: you can add logging or UI updates here if desired
+    }
     @Published var isScanning = false
     @Published var nfcMessage: String?
     @Published var transactionData: [String: String]?
@@ -124,50 +127,137 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     }
     
     // iOS 13+ support for didDetectTags
+    // @available(iOS 13.0, *)
+    // func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
+    //     guard let tag = tags.first else {
+    //         session.invalidate(errorMessage: "No tag found")
+    //         return
+    //     }
+        
+    //     // Connect to the tag and read its NDEF message
+    //     session.connect(to: tag) { error in
+    //         if let error = error {
+    //             session.invalidate(errorMessage: "Connection error: \(error.localizedDescription)")
+    //             return
+    //         }
+            
+    //         tag.queryNDEFStatus { status, capacity, error in
+    //             if let error = error {
+    //                 session.invalidate(errorMessage: "Query status error: \(error.localizedDescription)")
+    //                 return
+    //             }
+                
+    //             switch status {
+    //             case .notSupported:
+    //                 session.invalidate(errorMessage: "Tag is not NDEF compliant")
+                    
+    //             case .readOnly, .readWrite:
+    //                 tag.readNDEF { message, error in
+    //                     if let error = error {
+    //                         session.invalidate(errorMessage: "Read error: \(error.localizedDescription)")
+    //                         return
+    //                     }
+                        
+    //                     guard let message = message else {
+    //                         session.invalidate(errorMessage: "No NDEF message found")
+    //                         return
+    //                     }
+                        
+    //                     // Process the message
+    //                     self.readerSession(session, didDetectNDEFs: [message])
+    //                 }
+                    
+    //             @unknown default:
+    //                 session.invalidate(errorMessage: "Unknown tag status")
+    //             }
+    //         }
+    //     }
+    // }
     @available(iOS 13.0, *)
     func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
         guard let tag = tags.first else {
             session.invalidate(errorMessage: "No tag found")
             return
         }
-        
-        // Connect to the tag and read its NDEF message
+
         session.connect(to: tag) { error in
+        if let error = error {
+            session.invalidate(errorMessage: "Connection error: \(error.localizedDescription)")
+            return
+        }
+
+        tag.queryNDEFStatus { status, capacity, error in
             if let error = error {
-                session.invalidate(errorMessage: "Connection error: \(error.localizedDescription)")
+                session.invalidate(errorMessage: "Query status error: \(error.localizedDescription)")
                 return
             }
-            
-            tag.queryNDEFStatus { status, capacity, error in
-                if let error = error {
-                    session.invalidate(errorMessage: "Query status error: \(error.localizedDescription)")
-                    return
-                }
-                
-                switch status {
-                case .notSupported:
-                    session.invalidate(errorMessage: "Tag is not NDEF compliant")
-                    
-                case .readOnly, .readWrite:
+
+            switch status {
+            case .notSupported:
+                session.invalidate(errorMessage: "Tag is not NDEF compliant")
+
+            case .readOnly:
+                session.invalidate(errorMessage: "Tag is read-only and cannot be written")
+
+            case .readWrite:
+                if let payloadString = self.writePayload {
+                    // Always use Well Known Text type for writing
+                    // Construct a valid RTD_TEXT payload manually for maximum compatibility
+                    let lang = "en"
+                    let langBytes = Array(lang.utf8)
+                    let textBytes = Array(payloadString.utf8)
+                    let statusByte = UInt8(langBytes.count)
+                    var payload: [UInt8] = [statusByte]
+                    payload.append(contentsOf: langBytes)
+                    payload.append(contentsOf: textBytes)
+                    let payloadData = Data(payload)
+                    let textPayload = NFCNDEFPayload(
+                        format: .nfcWellKnown,
+                        type: Data([0x54]), // "T"
+                        identifier: Data(),
+                        payload: payloadData
+                    )
+                    let message = NFCNDEFMessage(records: [textPayload])
+                    tag.writeNDEF(message) { error in
+                        DispatchQueue.main.async {
+                            self.isScanning = false
+                            self.writePayload = nil
+                        }
+                        if let error = error {
+                            session.invalidate(errorMessage: "Write error: \(error.localizedDescription)")
+                            DispatchQueue.main.async {
+                                self.nfcMessage = "Write error: \(error.localizedDescription)"
+                            }
+                        } else {
+                            session.alertMessage = "Successfully wrote to NFC tag"
+                            session.invalidate()
+                            DispatchQueue.main.async {
+                                self.nfcMessage = "Write success: \(payloadString)"
+                            }
+                        }
+                    }
+                } else {
+                    // 如果是讀取流程
                     tag.readNDEF { message, error in
                         if let error = error {
                             session.invalidate(errorMessage: "Read error: \(error.localizedDescription)")
                             return
                         }
-                        
+
                         guard let message = message else {
                             session.invalidate(errorMessage: "No NDEF message found")
                             return
                         }
-                        
+
                         // Process the message
                         self.readerSession(session, didDetectNDEFs: [message])
                     }
-                    
-                @unknown default:
-                    session.invalidate(errorMessage: "Unknown tag status")
                 }
+
+            @unknown default:
+                session.invalidate(errorMessage: "Unknown tag status")
             }
         }
     }
+}
 }

@@ -25,7 +25,7 @@ struct NFCWriteView: View {
             Button(action: {
                 hideKeyboard()
                 nfcService.startWriting(recipient: recipient, amount: amount)
-                showAlert = true
+                // Do not show alert here! Wait for session to complete.
             }) {
                 HStack {
                     Image(systemName: "wave.3.right")
@@ -53,6 +53,12 @@ struct NFCWriteView: View {
         .padding()
         .alert(isPresented: $showAlert) {
             Alert(title: Text("NFC Tag"), message: Text(nfcService.nfcMessage ?? ""), dismissButton: .default(Text("OK")))
+        }
+        .onChange(of: nfcService.nfcMessage) { newValue in
+            // Only show alert if there is a message, and the session is not scanning
+            if newValue != nil && !nfcService.isScanning {
+                showAlert = true
+            }
         }
     }
 }

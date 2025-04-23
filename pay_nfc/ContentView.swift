@@ -10,6 +10,9 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = TransactionViewModel()
     @State private var showNFCWrite = false
+    @State private var lastReadRecipient: String? = nil
+    @State private var lastReadAmount: String? = nil
+    @State private var showReadInfo: Bool = false
     
     var body: some View {
         NavigationView {
@@ -47,6 +50,14 @@ struct ContentView: View {
                         // Scan Button
                         Button(action: {
                             viewModel.startNFCScan()
+                            // Listen for NFC read result with a slight delay to allow NFCService to update
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                if let data = viewModel.nfcService.transactionData {
+                                    lastReadRecipient = data["recipient"]
+                                    lastReadAmount = data["amount"]
+                                    showReadInfo = (lastReadRecipient != nil || lastReadAmount != nil)
+                                }
+                            }
                         }) {
                             HStack {
                                 Image(systemName: "wave.3.right")
@@ -101,6 +112,23 @@ struct ContentView: View {
                         .padding(.horizontal, 40)
                     }
                     
+                    // Show read NFC tag info if available
+                    if showReadInfo {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Read NFC Tag Information:")
+                                .font(.headline)
+                            if let recipient = lastReadRecipient {
+                                Text("Recipient: \(recipient)")
+                            }
+                            if let amount = lastReadAmount {
+                                Text("Amount: \(amount)")
+                            }
+                        }
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(10)
+                        .padding(.horizontal, 40)
+                    }
                     Spacer()
                 }
                 .padding()
