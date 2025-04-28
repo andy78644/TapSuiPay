@@ -27,12 +27,10 @@ PODS:
     - AppAuth/Core (~> 1.7)
     - GTMSessionFetcher/Core (< 4.0, >= 3.3)
   - GTMSessionFetcher/Core (3.5.0)
-  - JWTDecode (3.3.0)
   - PromisesObjC (2.4.0)
 
 DEPENDENCIES:
   - GoogleSignIn
-  - JWTDecode
 
 SPEC REPOS:
   trunk:
@@ -42,7 +40,6 @@ SPEC REPOS:
     - GoogleUtilities
     - GTMAppAuth
     - GTMSessionFetcher
-    - JWTDecode
     - PromisesObjC
 
 SPEC CHECKSUMS:
@@ -52,9 +49,8 @@ SPEC CHECKSUMS:
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  JWTDecode: 1ca6f765844457d0dd8690436860fecee788f631
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
 
-PODFILE CHECKSUM: 3bb9e2a5bc9e1be3f996278ceec251178577f0bf
+PODFILE CHECKSUM: af670ef0d911554aa57faf5ce2dc8bd27690d4af
 
 COCOAPODS: 1.16.2

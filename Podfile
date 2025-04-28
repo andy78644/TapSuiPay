@@ -17,7 +17,7 @@ target 'pay_nfc' do
 
   # Pods for pay_nfc
   pod 'GoogleSignIn'
-  pod 'JWTDecode'
+  # pod 'JWTDecode'
   # pod 'SuiKit'
 
 
