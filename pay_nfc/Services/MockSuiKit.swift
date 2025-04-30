@@ -166,3 +166,62 @@ struct SystemState {
     let epoch: UInt64
     // 其他属性可以根据需要添加
 }
+
+// 添加 ZkLoginUtil 類別
+class ZkLoginUtil {
+    static func computeZkLoginAddress(
+        claimName: String,
+        claimValue: String,
+        audience: String,
+        userSalt: String
+    ) throws -> String {
+        // 這是一個模擬實現，用於開發/測試
+        // 實際應用中應使用 SuiKit 的真實方法
+        let input = "\(claimName):\(claimValue):\(audience):\(userSalt)"
+        let inputData = input.data(using: .utf8)!
+        let hash = SHA256.hash(data: inputData)
+        let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
+        
+        return "0x\(hashString.prefix(40))"
+    }
+    
+    // 添加與示例匹配的 jwtToAddress 方法
+    static func jwtToAddress(jwt: String, userSalt: String) throws -> String {
+        // 解析 JWT 獲取必要信息
+        guard let jwt = try? decode(jwt: jwt) else {
+            throw NSError(domain: "ZkLoginUtil", code: 1001, userInfo: [NSLocalizedDescriptionKey: "無法解析 JWT"])
+        }
+        
+        // 獲取 sub 和 aud 值
+        guard let sub = jwt.claim(name: "sub").string else {
+            throw NSError(domain: "ZkLoginUtil", code: 1002, userInfo: [NSLocalizedDescriptionKey: "JWT 缺少 sub 字段"])
+        }
+        
+        // 獲取 audience (aud)，可能是字串或陣列
+        var audience = ""
+        if let aud = jwt.claim(name: "aud").string {
+            audience = aud
+        } else if let auds = jwt.claim(name: "aud").array as? [String], let firstAud = auds.first {
+            audience = firstAud
+        } else {
+            throw NSError(domain: "ZkLoginUtil", code: 1003, userInfo: [NSLocalizedDescriptionKey: "JWT 缺少有效的 aud 字段"])
+        }
+        
+        // 計算地址
+        let input = "sub:\(sub):\(audience):\(userSalt)"
+        let inputData = input.data(using: .utf8)!
+        let hash = SHA256.hash(data: inputData)
+        let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
+        
+        return "0x\(hashString.prefix(40))"
+    }
+}
+
+// 添加 decode 函數，用於 MockSuiKit 內部使用
+func decode(jwt: String) throws -> JWT {
+    return try JWTDecode.decode(jwt: jwt)
+}
+
+// 添加簡易的 SHA256 支持 (如果需要)
+import CryptoKit
+import JWTDecode // 添加 JWTDecode 依賴

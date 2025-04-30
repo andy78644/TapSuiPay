@@ -1,6 +1,6 @@
 import Foundation
 import AuthenticationServices
-// import SuiKit
+import SuiKit // Enable real SuiKit integration
 import GoogleSignIn
 import CryptoKit
 import JWTDecode
@@ -292,37 +292,86 @@ class SUIZkLoginService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     
     /// 完成zkLogin流程，获取zkProof并派生SUI地址
     private func completeZkLogin(idToken: String) {
-        // --- SIMULATION MODE: bypass server, always succeed ---
-        guard let salt = userSalt else {
-            self.errorMessage = "无法获取zkLogin所需数据"
+        // --- REAL zkLogin wallet creation using SuiKit ---
+        guard let salt = userSalt, !salt.isEmpty else {
+            print("❌ 使用者鹽值為空或 nil")
+            self.errorMessage = "无法获取zkLogin所需数据: 鹽值為空"
             self.isAuthenticating = false
             return
         }
-        print("[模拟] 开始完成zkLogin流程... 使用盐值: \(salt)")
-        // 1. 解析sub（模拟）
-        let sub: String = "simulated_sub_123456"
-        // 2. 生成假地址（可用真实sub+salt, 这里只是演示）
-        let input = sub + salt
-        let fakeAddr = "0x" + String(input.hashValue).replacingOccurrences(of: "-", with: "a").padding(toLength: 40, withPad: "f", startingAt: 0)
-        // 3. 保存并广播
-        DispatchQueue.main.async {
-            self.walletAddress = fakeAddr
-            UserDefaults.standard.set(fakeAddr, forKey: self.addressKey)
-            print("✅ [模拟] zkLogin认证成功!")
-            print("📝 [模拟] 钱包地址: \(self.walletAddress)")
-            NotificationCenter.default.post(
-                name: Notification.Name("AuthenticationCompleted"),
-                object: nil
-            )
-            self.isAuthenticating = false
-            self.errorMessage = nil
+        
+        // 將鹽值正規化為十進制數字，若為十六進制則轉換
+        var normalizedSalt = salt
+        if salt.hasPrefix("0x") {
+            normalizedSalt = String(salt.dropFirst(2))
         }
-        // --- END SIMULATION ---
+        
+        // 確保鹽值是數字
+        let decimal = UInt64(normalizedSalt, radix: 16) ?? 0
+        let saltAsDecimalString = String(decimal)
+        
+        print("🔑 原始鹽值: \(salt)")
+        print("🔑 處理後鹽值: \(saltAsDecimalString)")
+        
+        // 使用真實 SuiKit 的 zkLoginUtilities 來計算地址
+        var zkAddress: String = ""
+        do {
+            // 先解碼 JWT 以檢查所需的聲明
+            let jwt = try JWTDecode.decode(jwt: idToken)
+            guard let sub = jwt.claim(name: "sub").string else {
+                throw NSError(domain: "SUIZkLogin", code: 1001, userInfo: [NSLocalizedDescriptionKey: "JWT 缺少 sub 聲明"])
+            }
+            
+            var aud = ""
+            if let audience = jwt.claim(name: "aud").string {
+                aud = audience
+            } else if let audiences = jwt.claim(name: "aud").array as? [String], let firstAud = audiences.first {
+                aud = firstAud
+            } else {
+                throw NSError(domain: "SUIZkLogin", code: 1002, userInfo: [NSLocalizedDescriptionKey: "JWT 缺少 aud 聲明"])
+            }
+            
+            print("📝 JWT sub: \(sub)")
+            print("📝 JWT aud: \(aud)")
+            
+            // 使用 SuiKit 的 zkLoginUtilities.jwtToAddress 方法
+            // 根據 SuiKit 官方實現，可能需要用字符串形式的鹽值
+            zkAddress = try zkLoginUtilities.jwtToAddress(
+                jwt: idToken,
+                userSalt: saltAsDecimalString // 使用十進制數字的字符串
+            )
+            print("✅ 成功計算 zkLogin 地址: \(zkAddress)")
+        } catch {
+            print("❌ zkLogin 地址計算失敗: \(error)")
+            self.errorMessage = "zkLogin 地址计算失败: \(error.localizedDescription)"
+            self.isAuthenticating = false
+            return
+        }
+        
+        // 繼續處理計算出的地址
+        if !zkAddress.isEmpty {
+            DispatchQueue.main.async {
+                self.walletAddress = zkAddress
+                UserDefaults.standard.set(zkAddress, forKey: self.addressKey)
+                print("✅ zkLogin认证成功!")
+                print("📝 钱包地址: \(self.walletAddress)")
+                NotificationCenter.default.post(
+                    name: Notification.Name("AuthenticationCompleted"),
+                    object: nil
+                )
+                self.isAuthenticating = false
+                self.errorMessage = nil
+            }
+        } else {
+            DispatchQueue.main.async {
+                print("❌ 計算出的地址為空")
+                self.errorMessage = "无法生成有效的 zkLogin 地址"
+                self.isAuthenticating = false
+            }
+        }
+        // --- END REAL zkLogin ---
         return
     }
-    // --- 真实网络请求/zkProof逻辑已被移除（仅保留模拟） ---
-    // 若需恢复真实zkLogin逻辑，请还原此处的网络和zkProof处理代码。
-
     
     /// 从UserDefaults加载用户数据
     private func loadUserData() {
@@ -378,25 +427,5 @@ struct ZkProofResponse: Codable {
     // 其他字段...
 }
 
-// 由于SUI Swift SDK可能没有完整实现zkLogin功能，我们添加一些辅助方法
-// 注意：这些方法是模拟的，实际应用中需要根据真实SDK调整
-class ZkLoginUtil {
-    // SuiKit可能尚未提供zkLogin方法的具体实现，这里提供临时实现
-    // 实际应用中应使用SuiKit提供的方法
-    
-    static func computeZkLoginAddressFromSeed(
-        name: String,
-        value: String,
-        issuer: String,
-        audience: String
-    ) throws -> String {
-        // 实际应用中，这里应该使用SDK的实现
-        // 这里基于输入参数生成一个假地址作为示例
-        let input = "\(name)\(value)\(issuer)\(audience)"
-        let inputData = input.data(using: .utf8)!
-        let hashedData = SHA256.hash(data: inputData)
-        let hashString = hashedData.compactMap { String(format: "%02x", $0) }.joined()
-        
-        return "0x\(hashString.prefix(40))"
-    }
-} 
+// 移除自定義的 ZkLoginUtil
+// class ZkLoginUtil { ... }

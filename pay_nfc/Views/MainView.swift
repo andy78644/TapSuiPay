@@ -1,7 +1,11 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct MainView: View {
     @StateObject private var viewModel = TransactionViewModel()
+    @State private var copied = false
     
     var body: some View {
         NavigationStack {
@@ -123,9 +127,40 @@ struct MainView: View {
                         .foregroundColor(.green)
                 }
                 
-                Text(viewModel.isWalletConnected ? "0x123abc..." : "")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                let address = viewModel.getWalletAddress()
+                if !address.isEmpty {
+                    Button(action: {
+                        print("Copy wallet address tapped")
+                        #if os(iOS)
+                        UIPasteboard.general.string = address
+                        #endif
+                        copied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            copied = false
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Text(address.prefix(6) + "..." + address.suffix(4))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Image(systemName: "doc.on.doc")
+                                .font(.caption2)
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    .foregroundColor(.primary)
+.frame(maxWidth: .infinity, alignment: .leading)
+                    .overlay(
+                        Group {
+                            if copied {
+                                Text("Copied!")
+                                    .font(.caption2)
+                                    .foregroundColor(.green)
+                                    .padding(.leading, 8)
+                            }
+                        }, alignment: .trailing
+                    )
+                }
             } else {
                 HStack {
                     Image(systemName: "exclamationmark.circle.fill")
