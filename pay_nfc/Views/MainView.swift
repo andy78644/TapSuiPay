@@ -6,6 +6,7 @@ import UIKit
 struct MainView: View {
     @StateObject private var viewModel = TransactionViewModel()
     @State private var copied = false
+    @State private var showAddressCopiedToast = false
     
     var body: some View {
         NavigationStack {
@@ -119,65 +120,149 @@ struct MainView: View {
     private var walletStatusView: some View {
         VStack(spacing: 8) {
             if viewModel.isWalletConnected {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Wallet Connected")
-                        .font(.headline)
-                        .foregroundColor(.green)
-                }
+                // 已連接頭部
+                walletConnectedHeader
                 
+                // 地址顯示和複製按鈕 - 重寫為明確的按鈕
                 let address = viewModel.getWalletAddress()
                 if !address.isEmpty {
-                    Button(action: {
-                        print("Copy wallet address tapped")
-                        #if os(iOS)
-                        UIPasteboard.general.string = address
-                        #endif
-                        copied = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                            copied = false
-                        }
-                    }) {
+                    VStack(spacing: 5) {
+                        // 地址顯示區域和明確的複製按鈕
                         HStack(spacing: 4) {
-                            Text(address.prefix(6) + "..." + address.suffix(4))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Image(systemName: "doc.on.doc")
-                                .font(.caption2)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .foregroundColor(.primary)
-.frame(maxWidth: .infinity, alignment: .leading)
-                    .overlay(
-                        Group {
-                            if copied {
-                                Text("Copied!")
-                                    .font(.caption2)
-                                    .foregroundColor(.green)
-                                    .padding(.leading, 8)
+                            // 地址文字
+                            HStack {
+                                Text(address.prefix(6) + "..." + address.suffix(4))
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.primary)
                             }
-                        }, alignment: .trailing
-                    )
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.blue.opacity(0.1))
+                            )
+                            
+                            // 專用的複製按鈕
+                            Button(action: {
+                                print("複製按鈕被點擊")
+                                copyToClipboard(text: address)
+                            }) {
+                                Image(systemName: "doc.on.doc.circle.fill")
+                                    .resizable()
+                                    .frame(width: 30, height: 30)
+                                    .foregroundColor(.blue)
+                                    .background(Color.white)
+                                    .clipShape(Circle())
+                                    .shadow(color: .gray.opacity(0.5), radius: 2, x: 0, y: 1)
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                        }
+                        
+                        // 複製成功的提示
+                        if copied {
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("地址已複製!")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                                    .bold()
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color.green.opacity(0.2))
+                            )
+                            .transition(.opacity)
+                        }
+                        
+                        Text("點擊複製按鈕可複製錢包地址")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 2)
+                    }
                 }
             } else {
-                HStack {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(.orange)
-                    Text("Wallet Not Connected")
-                        .font(.headline)
-                        .foregroundColor(.orange)
-                }
-                
-                Text("Connect with zkLogin to continue")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                // 未連接顯示
+                walletNotConnectedView
             }
         }
         .padding()
         .background(Color.gray.opacity(0.1))
         .cornerRadius(10)
+    }
+    
+    // 簡化的複製到剪貼簿功能
+    private func copyToClipboard(text: String) {
+        print("開始執行複製操作: \(text)")
+        
+        #if canImport(UIKit)
+        UIPasteboard.general.string = text
+        print("iOS 複製完成")
+        #elseif canImport(AppKit)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        print("macOS 複製完成")
+        #endif
+        
+        withAnimation {
+            copied = true
+        }
+        
+        // 延遲1.5秒後隱藏提示
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation {
+                copied = false
+            }
+        }
+    }
+    
+    // 已連接的錢包頭部視圖
+    private var walletConnectedHeader: some View {
+        HStack {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+            Text("Wallet Connected")
+                .font(.headline)
+                .foregroundColor(.green)
+            
+            Spacer()
+            
+            // 登出按鈕
+            Button(action: {
+                viewModel.signOut()
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.caption)
+                    Text("登出")
+                        .font(.caption)
+                }
+                .foregroundColor(.red)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(8)
+            }
+        }
+    }
+    
+    // 未連接錢包的顯示
+    private var walletNotConnectedView: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundColor(.orange)
+                Text("Wallet Not Connected")
+                    .font(.headline)
+                    .foregroundColor(.orange)
+            }
+            
+            Text("Connect with zkLogin to continue")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
     }
 }
 
