@@ -279,7 +279,7 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
     
     // MARK: - Transaction Methods
     
-    func constructTransaction(recipientAddress: String, amount: Double) -> Transaction? {
+    func constructTransaction(recipientAddress: String, amount: Double, coinType: String = "SUI") -> Transaction? {
         guard !walletAddress.isEmpty else {
             errorMessage = "Sender wallet address not available"
             return nil
@@ -293,7 +293,8 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         return Transaction(
             recipientAddress: recipientAddress,
             amount: amount,
-            senderAddress: walletAddress
+            senderAddress: walletAddress,
+            coinType: coinType
         )
     }
     

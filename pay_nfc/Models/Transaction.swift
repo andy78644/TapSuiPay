@@ -4,6 +4,7 @@ struct Transaction: Codable {
     let recipientAddress: String
     let amount: Double
     let senderAddress: String
+    let coinType: String
     var transactionId: String?
     var status: TransactionStatus = .pending
     

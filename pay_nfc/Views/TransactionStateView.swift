@@ -168,7 +168,7 @@ struct TransactionStateView: View {
                     
                     Spacer()
                     
-                    Text("\(viewModel.currentTransaction?.amount ?? 0) SUI")
+                    Text("\(viewModel.currentTransaction?.amount ?? 0) \(viewModel.currentTransaction?.coinType ?? "SUI")")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(primaryColor)
                 }
@@ -284,7 +284,7 @@ struct TransactionStateView: View {
                     
                     Spacer()
                     
-                    Text("\(viewModel.currentTransaction?.amount ?? 0) SUI")
+                    Text("\(viewModel.currentTransaction?.amount ?? 0) \(viewModel.currentTransaction?.coinType ?? "SUI")")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(successColor)
                 }

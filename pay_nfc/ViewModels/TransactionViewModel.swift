@@ -136,23 +136,65 @@ class TransactionViewModel: ObservableObject {
     }
     
     private func processTransactionData(_ data: [String: String]) {
-        guard let recipientAddressStr = data["recipient"],
-              let amountStr = data["amount"],
-              let amount = Double(amountStr) else {
-            errorMessage = "Invalid transaction data format"
+        // 檢查必要欄位
+        guard let recipientAddressStr = data["recipient"] else {
+            errorMessage = "交易資料缺少收款人地址"
             transactionState = .failed
             return
         }
         
-        // 创建交易对象
+        // 確保 amount 欄位存在且可轉換為有效數字
+        guard let amountStr = data["amount"] else {
+            errorMessage = "交易資料缺少金額欄位"
+            transactionState = .failed
+            return
+        }
+        
+        // 確保 coinType 欄位存在
+        guard let coinType = data["coinType"] else {
+            errorMessage = "交易資料缺少幣種欄位"
+            transactionState = .failed
+            return
+        }
+        
+        // 嘗試解析金額
+        guard let amount = Double(amountStr), amount > 0 else {
+            errorMessage = "交易金額格式無效或小於等於零: \(amountStr)"
+            transactionState = .failed
+            return
+        }
+        
+        // 檢查收款人地址格式
+        if recipientAddressStr.isEmpty || !isValidSuiAddress(recipientAddressStr) {
+            errorMessage = "收款人地址格式無效: \(recipientAddressStr)"
+            transactionState = .failed
+            return
+        }
+        
+        // 確保發送者地址有效
+        if zkLoginService.walletAddress.isEmpty {
+            errorMessage = "尚未連接錢包或錢包地址無效"
+            transactionState = .failed
+            return
+        }
+        
+        // 創建交易對象
         let transaction = Transaction(
             recipientAddress: recipientAddressStr,
             amount: amount,
-            senderAddress: zkLoginService.walletAddress
+            senderAddress: zkLoginService.walletAddress,
+            coinType: coinType
         )
         
         currentTransaction = transaction
         transactionState = .confirmingTransaction
+    }
+    
+    // 簡單驗證 SUI 地址格式
+    private func isValidSuiAddress(_ address: String) -> Bool {
+        // SUI 地址通常以 "0x" 開頭，後跟 64 個十六進制字符 (32 bytes)
+        // 這是一個簡化的檢查，完整檢查還應該驗證十六進制字符有效性
+        return address.hasPrefix("0x") && address.count == 66
     }
     
     func confirmAndSignTransaction() {

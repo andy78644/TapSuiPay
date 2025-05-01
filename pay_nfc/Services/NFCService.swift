@@ -124,73 +124,103 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     }
     
     private func parseTransactionData(from payload: String) {
-        // Example format: "recipient=address123&amount=10.5"
-        let pairs = payload.components(separatedBy: "&")
-        var data = [String: String]()
+        // Example format: "recipient=address123&amount=10.5&coinType=SUI"
+        // 首先檢查 payload 是否為空
+        guard !payload.isEmpty else {
+            DispatchQueue.main.async {
+                self.transactionData = nil
+                self.nfcMessage = "讀取到空白內容，請確認 NFC 標籤已正確寫入資料"
+                self.isScanning = false
+            }
+            return
+        }
         
-        for pair in pairs {
+        // 添加日誌以便調試
+        print("🔍 NFC Payload: \(payload)")
+        
+        // 更強健的解析方法
+        var data = [String: String]()
+        var hasValidData = false
+        
+        // 1. 嘗試標準格式解析 (recipient=xxx&amount=yyy&coinType=zzz)
+        let standardPairs = payload.components(separatedBy: "&")
+        for pair in standardPairs {
             let elements = pair.components(separatedBy: "=")
             if elements.count == 2 {
-                let key = elements[0]
-                let value = elements[1]
-                data[key] = value
+                let key = elements[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                let value = elements[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                if !key.isEmpty && !value.isEmpty {
+                    data[key] = value
+                    hasValidData = true
+                    print("✅ 解析鍵值對: \(key)=\(value)")
+                }
             }
         }
         
+        // 2. 如果沒有找到標準格式的資料，嘗試查找任何可能的收款地址格式
+        if !hasValidData || data["recipient"] == nil {
+            // 嘗試查找 0x 開頭的地址字符串，這通常是一個 SUI 地址
+            if let addressMatch = payload.range(of: "0x[0-9a-fA-F]{40,}", options: .regularExpression) {
+                let address = String(payload[addressMatch])
+                data["recipient"] = address
+                hasValidData = true
+                print("✅ 通過正則表達式找到收款地址: \(address)")
+            }
+        }
+        
+        // 3. 嘗試查找金額
+        if !hasValidData || data["amount"] == nil {
+            // 查找數字格式 (可能帶小數點)
+            let amountPattern = "\\b\\d+(\\.\\d+)?\\b"
+            if let amountMatch = payload.range(of: amountPattern, options: .regularExpression) {
+                let amount = String(payload[amountMatch])
+                data["amount"] = amount
+                hasValidData = true
+                print("✅ 通過正則表達式找到金額: \(amount)")
+            }
+        }
+        
+        // 4. 如果找不到幣種，設定預設值為 SUI
+        if data["coinType"] == nil {
+            data["coinType"] = "SUI"
+            print("ℹ️ 未找到幣種，使用預設值: SUI")
+        }
+        
         DispatchQueue.main.async {
-            self.transactionData = data
-            self.nfcMessage = "Transaction data read successfully"
+            // 日誌記錄解析結果
+            print("📊 解析結果:")
+            for (key, value) in data {
+                print("   \(key): \(value)")
+            }
+            
+            if hasValidData {
+                self.transactionData = data
+                
+                // 檢查是否包含必要的交易資訊
+                let hasMissingFields = data["recipient"] == nil || data["amount"] == nil
+                if !hasMissingFields {
+                    self.nfcMessage = "Transaction data read successfully"
+                } else {
+                    // 資料存在但缺少關鍵欄位
+                    let missingFields = [
+                        data["recipient"] == nil ? "recipient" : nil,
+                        data["amount"] == nil ? "amount" : nil
+                    ].compactMap { $0 }.joined(separator: ", ")
+                    
+                    self.nfcMessage = "讀取到不完整的交易資料，缺少: \(missingFields)，請確認 NFC 標籤格式"
+                    print("❌ 缺少關鍵欄位: \(missingFields)")
+                }
+            } else {
+                // 沒有找到任何有效的鍵值對
+                self.transactionData = nil
+                self.nfcMessage = "無法辨識的交易資料格式: \(payload)"
+                print("❌ 無法解析 NFC 標籤內容")
+            }
             self.isScanning = false
         }
     }
     
-    // iOS 13+ support for didDetectTags
-    // @available(iOS 13.0, *)
-    // func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
-    //     guard let tag = tags.first else {
-    //         session.invalidate(errorMessage: "No tag found")
-    //         return
-    //     }
-        
-    //     // Connect to the tag and read its NDEF message
-    //     session.connect(to: tag) { error in
-    //         if let error = error {
-    //             session.invalidate(errorMessage: "Connection error: \(error.localizedDescription)")
-    //             return
-    //         }
-            
-    //         tag.queryNDEFStatus { status, capacity, error in
-    //             if let error = error {
-    //                 session.invalidate(errorMessage: "Query status error: \(error.localizedDescription)")
-    //                 return
-    //             }
-                
-    //             switch status {
-    //             case .notSupported:
-    //                 session.invalidate(errorMessage: "Tag is not NDEF compliant")
-                    
-    //             case .readOnly, .readWrite:
-    //                 tag.readNDEF { message, error in
-    //                     if let error = error {
-    //                         session.invalidate(errorMessage: "Read error: \(error.localizedDescription)")
-    //                         return
-    //                     }
-                        
-    //                     guard let message = message else {
-    //                         session.invalidate(errorMessage: "No NDEF message found")
-    //                         return
-    //                     }
-                        
-    //                     // Process the message
-    //                     self.readerSession(session, didDetectNDEFs: [message])
-    //                 }
-                    
-    //             @unknown default:
-    //                 session.invalidate(errorMessage: "Unknown tag status")
-    //             }
-    //         }
-    //     }
-    // }
     @available(iOS 13.0, *)
     func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
         guard let tag = tags.first else {
