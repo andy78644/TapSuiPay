@@ -3,11 +3,38 @@ import SwiftUI
 struct NFCWriteView: View {
     @State private var recipient: String
     @State private var amount: String = ""
+    @State private var selectedCoinType: CoinType = .SUI
     @ObservedObject var nfcService: NFCService
     @State private var showAlert = false
     @Environment(\.dismiss) private var dismiss
     // 預設地址常數
     private let defaultAddress = "0x2d33851553afbc0ffe801feda4eff72f1d0ae94c35f487cf581f350edbd21dd1"
+    
+    // 幣種類型枚舉
+    enum CoinType: String, CaseIterable, Identifiable {
+        case SUI = "SUI"
+        case USDC = "USDC"
+        
+        var id: String { self.rawValue }
+        
+        var color: Color {
+            switch self {
+            case .SUI:
+                return Color(red: 0.2, green: 0.5, blue: 0.9)
+            case .USDC:
+                return Color(red: 0.2, green: 0.6, blue: 0.4)
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .SUI:
+                return "dollarsign.circle"
+            case .USDC:
+                return "u.circle"
+            }
+        }
+    }
     
     // 定義統一的顏色主題
     private let primaryColor = Color(red: 0.2, green: 0.5, blue: 0.9)
@@ -75,10 +102,84 @@ struct NFCWriteView: View {
                             .disableAutocorrection(true)
                     }
                     
+                    // 幣種選擇器
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Image(systemName: "dollarsign.circle")
+                            Image(systemName: "coloncurrencysign.circle")
                                 .foregroundColor(primaryColor)
+                            Text("幣種")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color.black.opacity(0.7))
+                        }
+                        
+                        HStack(spacing: 15) {
+                            // SUI 按鈕
+                            Button(action: {
+                                selectedCoinType = .SUI
+                            }) {
+                                HStack {
+                                    Image(systemName: CoinType.SUI.icon)
+                                        .font(.system(size: 18))
+                                    Text(CoinType.SUI.rawValue)
+                                        .font(.system(size: 16, weight: .medium))
+                                }
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 20)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(selectedCoinType == .SUI ? 
+                                              CoinType.SUI.color.opacity(0.15) : 
+                                              Color.gray.opacity(0.1))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(selectedCoinType == .SUI ? 
+                                                        CoinType.SUI.color : 
+                                                        Color.gray.opacity(0.3), lineWidth: 1.5)
+                                        )
+                                )
+                                .foregroundColor(selectedCoinType == .SUI ? 
+                                                CoinType.SUI.color : 
+                                                Color.black.opacity(0.6))
+                            }
+                            
+                            // USDC 按鈕
+                            Button(action: {
+                                selectedCoinType = .USDC
+                            }) {
+                                HStack {
+                                    Image(systemName: CoinType.USDC.icon)
+                                        .font(.system(size: 18))
+                                    Text(CoinType.USDC.rawValue)
+                                        .font(.system(size: 16, weight: .medium))
+                                }
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 20)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(selectedCoinType == .USDC ? 
+                                              CoinType.USDC.color.opacity(0.15) : 
+                                              Color.gray.opacity(0.1))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(selectedCoinType == .USDC ? 
+                                                        CoinType.USDC.color : 
+                                                        Color.gray.opacity(0.3), lineWidth: 1.5)
+                                        )
+                                )
+                                .foregroundColor(selectedCoinType == .USDC ? 
+                                                CoinType.USDC.color : 
+                                                Color.black.opacity(0.6))
+                            }
+                        }
+                        .padding(.horizontal, 5)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: selectedCoinType.icon)
+                                .foregroundColor(selectedCoinType.color)
                             Text("付款金額")
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(Color.black.opacity(0.7))
@@ -89,9 +190,9 @@ struct NFCWriteView: View {
                                 .font(.system(size: 16))
                                 .keyboardType(.decimalPad)
                             
-                            Text("SUI")
+                            Text(selectedCoinType.rawValue)
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(primaryColor)
+                                .foregroundColor(selectedCoinType.color)
                                 .padding(.trailing, 8)
                         }
                         .padding()
@@ -119,7 +220,11 @@ struct NFCWriteView: View {
                 // 確認按鈕
                 Button(action: {
                     hideKeyboard()
-                    nfcService.startWriting(recipient: recipient, amount: amount)
+                    nfcService.startWriting(
+                        recipient: recipient,
+                        amount: amount,
+                        coinType: selectedCoinType.rawValue
+                    )
                 }) {
                     HStack {
                         Image(systemName: "wave.3.right")

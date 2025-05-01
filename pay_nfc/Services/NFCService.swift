@@ -25,12 +25,12 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         isScanning = true
     }
     // MARK: - NFC Writing
-    func startWriting(recipient: String, amount: String) {
+    func startWriting(recipient: String, amount: String, coinType: String = "SUI") {
         guard NFCNDEFReaderSession.readingAvailable else {
             self.nfcMessage = "NFC not available on this device"
             return
         }
-        let payloadString = "recipient=\(recipient)&amount=\(amount)"
+        let payloadString = "recipient=\(recipient)&amount=\(amount)&coinType=\(coinType)"
         writePayload = payloadString
         session = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: false)
         session?.alertMessage = "Hold your iPhone near the NFC tag to write transaction info"
@@ -39,9 +39,27 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     }
 
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
+        // 檢查是否已經標記為成功寫入，或是用戶主動取消的常見錯誤
+        let userCanceledErrorMessages = ["Session invalidated by user", "User canceled", "操作被取消"]
+        let errorMessage = error.localizedDescription
+        
+        // 如果已經設置了成功消息或者是用戶取消的情況，不要覆蓋為錯誤消息
+        let isUserCancellation = userCanceledErrorMessages.contains { errorMessage.contains($0) }
+        
         DispatchQueue.main.async {
             self.isScanning = false
-            self.nfcMessage = error.localizedDescription
+            
+            // 只有在尚未設置成功消息且不是用戶取消的情況下，才設置錯誤消息
+            if !(self.nfcMessage?.contains("success") == true) && !isUserCancellation {
+                self.nfcMessage = errorMessage
+            } else if isUserCancellation && self.writePayload != nil {
+                // 如果是用戶取消但我們剛剛在嘗試寫入，可能是寫入成功但會話仍然被關閉
+                // 在這種情況下保持可能已經設置的成功消息，或設置一個通用的成功消息
+                if self.nfcMessage == nil || !self.nfcMessage!.contains("success") {
+                    self.nfcMessage = "標籤寫入成功"
+                }
+                self.writePayload = nil
+            }
         }
     }
     
