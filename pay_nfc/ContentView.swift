@@ -195,7 +195,7 @@ struct ContentView: View {
             }
             .padding(.horizontal, 25)
             .sheet(isPresented: $showNFCWrite) {
-                NFCWriteView(nfcService: NFCService())
+                NFCWriteView(nfcService: NFCService(), userAddress: viewModel.getWalletAddress())
             }
         }
     }

@@ -1,14 +1,15 @@
 import SwiftUI
 
 struct NFCWriteView: View {
-    @State private var recipient: String
+    @State private var recipient: String = ""
     @State private var amount: String = ""
     @State private var selectedCoinType: CoinType = .SUI
     @ObservedObject var nfcService: NFCService
     @State private var showAlert = false
+    @State private var writeSuccess = false
+    @State private var showSuccessPopup = false
+    @State private var showCopiedToast = false
     @Environment(\.dismiss) private var dismiss
-    // 預設地址常數
-    private let defaultAddress = "0x2d33851553afbc0ffe801feda4eff72f1d0ae94c35f487cf581f350edbd21dd1"
     
     // 幣種類型枚舉
     enum CoinType: String, CaseIterable, Identifiable {
@@ -47,7 +48,7 @@ struct NFCWriteView: View {
     init(nfcService: NFCService, userAddress: String = "") {
         self.nfcService = nfcService
         // 如果提供的地址為空，則使用預設地址
-        self._recipient = State(initialValue: userAddress.isEmpty ? defaultAddress : userAddress)
+        self._recipient = State(initialValue: userAddress.isEmpty ? "" : userAddress)
     }
     
     var body: some View {
@@ -64,7 +65,6 @@ struct NFCWriteView: View {
                 // 標題
                 VStack(spacing: 10) {
                     Image(systemName: "tag.fill")
-                        .font(.system(size: 40))
                         .foregroundColor(secondaryColor)
                     
                     Text("寫入 NFC 標籤")
@@ -187,13 +187,14 @@ struct NFCWriteView: View {
                         
                         HStack {
                             TextField("金額", text: $amount)
-                                .font(.system(size: 16))
                                 .keyboardType(.decimalPad)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(selectedCoinType.color)
+                                .padding(.trailing, 8)
                             
                             Text(selectedCoinType.rawValue)
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(selectedCoinType.color)
-                                .padding(.trailing, 8)
                         }
                         .padding()
                         .background(
@@ -263,21 +264,25 @@ struct NFCWriteView: View {
                 
                 // 提示訊息
                 if let msg = nfcService.nfcMessage {
-                    HStack {
-                        Image(systemName: msg.contains("success") ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                            .foregroundColor(msg.contains("success") ? successColor : errorColor)
-                        
-                        Text(msg)
-                            .font(.system(size: 15))
-                            .foregroundColor(msg.contains("success") ? successColor : errorColor)
-                            .multilineTextAlignment(.center)
+                    if msg.contains("success") {
+                        writeSuccessView
+                    } else {
+                        HStack {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .foregroundColor(errorColor)
+                            
+                            Text(msg)
+                                .font(.system(size: 15))
+                                .foregroundColor(errorColor)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(errorColor.opacity(0.1))
+                        )
+                        .padding(.top, 16)
                     }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(msg.contains("success") ? successColor.opacity(0.1) : errorColor.opacity(0.1))
-                    )
-                    .padding(.top, 16)
                 }
                 
                 Spacer()
@@ -293,11 +298,300 @@ struct NFCWriteView: View {
             )
         }
         .onChange(of: nfcService.nfcMessage) { newValue in
-            // Only show alert if there is a message, and the session is not scanning
+            // 檢查是否有訊息且不是在掃描中
             if newValue != nil && !nfcService.isScanning {
-                showAlert = true
+                if newValue!.contains("success") {
+                    // 成功寫入 NFC，顯示成功彈窗
+                    writeSuccess = true
+                    showSuccessPopup = true
+                } else {
+                    // 其他訊息仍使用警告框
+                    showAlert = true
+                }
             }
         }
+        // 添加自定義成功彈出窗口
+        .overlay(
+            ZStack {
+                if showSuccessPopup {
+                    // 黑色半透明背景
+                    Color.black.opacity(0.4)
+                        .edgesIgnoringSafeArea(.all)
+                        .onTapGesture {
+                            // 點擊背景關閉彈窗
+                            withAnimation(.spring()) {
+                                showSuccessPopup = false
+                            }
+                        }
+                    
+                    // 成功彈窗內容
+                    successPopupView
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: showSuccessPopup)
+        )
+    }
+    
+    // 定義寫入成功時的視圖
+    private var writeSuccessView: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            // 成功標題
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(successColor)
+                
+                Text("NFC 標籤寫入成功")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(successColor)
+            }
+            .padding(.bottom, 8)
+            
+            // 寫入內容詳情卡片
+            VStack(alignment: .leading, spacing: 12) {
+                // 收款地址
+                HStack(alignment: .top) {
+                    Image(systemName: "person.crop.circle")
+                        .foregroundColor(primaryColor.opacity(0.7))
+                        .font(.system(size: 16))
+                    
+                    Text("收款地址:")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color.black.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Text(recipient)
+                        .font(.system(size: 16, design: .monospaced))
+                        .foregroundColor(Color.black.opacity(0.6))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                
+                Divider()
+                    .background(Color.black.opacity(0.1))
+                
+                // 金額
+                HStack {
+                    Image(systemName: selectedCoinType.icon)
+                        .foregroundColor(selectedCoinType.color.opacity(0.7))
+                        .font(.system(size: 16))
+                    
+                    Text("金額:")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color.black.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Text("\(amount) \(selectedCoinType.rawValue)")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(selectedCoinType.color)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
+            )
+            
+            // 操作提示
+            HStack {
+                Image(systemName: "info.circle")
+                    .foregroundColor(primaryColor.opacity(0.7))
+                    .font(.system(size: 14))
+                
+                Text("該標籤已可以使用 SUI NFC Pay 應用進行掃描支付")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color.black.opacity(0.6))
+            }
+            .padding(.top, 5)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(successColor.opacity(0.1))
+        )
+        .padding(.top, 16)
+    }
+    
+    // 定義成功彈窗視圖
+    private var successPopupView: some View {
+        VStack(alignment: .center, spacing: 20) {
+            // 成功標誌與動畫效果
+            ZStack {
+                Circle()
+                    .fill(successColor.opacity(0.1))
+                    .frame(width: 100, height: 100)
+                
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(successColor)
+            }
+            
+            Text("NFC 標籤寫入成功")
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundColor(successColor)
+            
+            // 交易詳情卡片
+            transactionDetailsCard
+            
+            // 操作按鈕
+            actionButtonsView
+        }
+        .padding(30)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+        .padding(.horizontal, 40)
+    }
+    
+    // 交易詳情卡片組件
+    private var transactionDetailsCard: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            // 收款地址
+            addressInfoView
+            
+            Divider()
+                .background(Color.black.opacity(0.1))
+            
+            // 金額
+            amountInfoView
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
+        )
+        .overlay(copyToastOverlay)
+    }
+    
+    // 複製成功提示覆蓋層
+    private var copyToastOverlay: some View {
+        Group {
+            if showCopiedToast {
+                VStack {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("已複製到剪貼板")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.green.opacity(0.1))
+                    )
+                }
+                .position(x: UIScreen.main.bounds.width/2 - 40, y: 0)
+                .offset(y: -15)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+    
+    // 地址信息視圖
+    private var addressInfoView: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading) {
+                Text("收款地址")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color.black.opacity(0.5))
+                
+                HStack {
+                    Text(recipient.prefix(15) + "..." + recipient.suffix(8))
+                        .font(.system(size: 16, design: .monospaced))
+                        .foregroundColor(Color.black.opacity(0.8))
+                    
+                    // 複製按鈕
+                    Button(action: {
+                        UIPasteboard.general.string = recipient
+                        withAnimation {
+                            showCopiedToast = true
+                        }
+                        // 2秒後隱藏提示
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                showCopiedToast = false
+                            }
+                        }
+                    }) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 15))
+                            .foregroundColor(primaryColor)
+                    }
+                }
+            }
+        }
+    }
+    
+    // 金額信息視圖
+    private var amountInfoView: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text("金額")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color.black.opacity(0.5))
+                
+                Text("\(amount) \(selectedCoinType.rawValue)")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(selectedCoinType.color)
+            }
+            
+            Spacer()
+            
+            // 幣種圖標
+            Image(systemName: selectedCoinType.icon)
+                .font(.system(size: 24))
+                .foregroundColor(selectedCoinType.color)
+        }
+    }
+    
+    // 操作按鈕視圖
+    private var actionButtonsView: some View {
+        HStack(spacing: 20) {
+            Button(action: {
+                // 關閉彈窗並返回上一頁
+                showSuccessPopup = false
+                dismiss()
+            }) {
+                HStack {
+                    Image(systemName: "checkmark")
+                    Text("完成")
+                }
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 25)
+                .background(successColor)
+                .cornerRadius(12)
+            }
+            
+            Button(action: {
+                // 關閉彈窗並重置表單準備寫入新標籤
+                showSuccessPopup = false
+                // 保留收款地址，但清空金額
+                amount = ""
+            }) {
+                HStack {
+                    Image(systemName: "plus")
+                    Text("再寫一個")
+                }
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(secondaryColor)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 25)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(secondaryColor, lineWidth: 1.5)
+                )
+            }
+        }
+        .padding(.top, 10)
     }
 }
 
