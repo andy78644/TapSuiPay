@@ -1,5 +1,6 @@
 import Foundation
 import CoreNFC
+import SuiKit  // 添加SuiKit導入
 
 @available(iOS 13.0, *)
 class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
@@ -9,12 +10,25 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     @Published var isScanning = false
     @Published var nfcMessage: String?
     @Published var transactionData: [String: String]?
+    @Published var transactionStatus: String? // 添加交易狀態追蹤
+    @Published var transactionId: String? // 添加交易ID追蹤
     
     private var session: NFCNDEFReaderSession?
     private var writePayload: String?
     
     // 新增：追蹤是否有作業正在進行中
     private var isSessionActive = false
+    
+    // 添加依賴服務
+    private var blockchainService: SUIBlockchainService?
+    private var zkLoginService: SUIZkLoginService?
+    
+    // 初始化方法，注入區塊鏈服務
+    init(blockchainService: SUIBlockchainService? = nil, zkLoginService: SUIZkLoginService? = nil) {
+        self.blockchainService = blockchainService
+        self.zkLoginService = zkLoginService
+        super.init()
+    }
     
     func startScanning() {
         // 檢查會話是否已經在運行中
@@ -84,6 +98,113 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                 self.nfcMessage = "啟動 NFC 寫入時發生錯誤: \(error.localizedDescription)"
                 self.isScanning = false
                 self.isSessionActive = false
+            }
+        }
+    }
+
+    // 新增: 使用SDK執行交易
+    func executeTransaction(recipient: String, amount: String, coinType: String = "SUI") {
+        guard let blockchainService = blockchainService else {
+            DispatchQueue.main.async {
+                self.nfcMessage = "區塊鏈服務未初始化，無法執行交易"
+                self.transactionStatus = "failed"
+            }
+            return
+        }
+        
+        // 檢查錢包地址
+        if blockchainService.walletAddress.isEmpty {
+            DispatchQueue.main.async {
+                self.nfcMessage = "請先登入 zkLogin 錢包再執行交易"
+                self.transactionStatus = "failed"
+            }
+            return
+        }
+        
+        // 檢查地址格式
+        guard recipient.starts(with: "0x") else {
+            DispatchQueue.main.async {
+                self.nfcMessage = "收款地址格式錯誤，須以0x開頭"
+                self.transactionStatus = "failed"
+            }
+            return
+        }
+        
+        // 檢查金額
+        guard let amountValue = Double(amount), amountValue > 0 else {
+            DispatchQueue.main.async {
+                self.nfcMessage = "金額必須大於0"
+                self.transactionStatus = "failed"
+            }
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.nfcMessage = "正在準備交易..."
+            self.transactionStatus = "preparing"
+        }
+        
+        // 建立交易物件
+        guard let transaction = blockchainService.constructTransaction(
+            recipientAddress: recipient,
+            amount: amountValue,
+            coinType: coinType
+        ) else {
+            DispatchQueue.main.async {
+                self.nfcMessage = "建立交易失敗: \(blockchainService.errorMessage ?? "未知錯誤")"
+                self.transactionStatus = "failed"
+            }
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.nfcMessage = "正在驗證並簽署交易..."
+            self.transactionStatus = "signing"
+        }
+        
+        // 驗證並簽署交易
+        blockchainService.authenticateAndSignTransaction(transaction: transaction) { success, message in
+            DispatchQueue.main.async {
+                if success, let txId = message {
+                    self.nfcMessage = "交易成功發送! 交易ID: \(txId)"
+                    self.transactionStatus = "completed"
+                    self.transactionId = txId
+                    
+                    // 驗證交易是否真實存在於區塊鏈上
+                    self.verifyTransactionExistence(txId: txId)
+                } else {
+                    self.nfcMessage = "交易失敗: \(message ?? "未知錯誤")"
+                    self.transactionStatus = "failed"
+                }
+            }
+        }
+    }
+    
+    // 新增: 驗證交易是否真實存在於區塊鏈上
+    private func verifyTransactionExistence(txId: String) {
+        guard let blockchainService = blockchainService else {
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.nfcMessage = "正在區塊鏈上驗證交易..."
+        }
+        
+        // 等待2秒後再驗證，確保交易有時間傳播到區塊鏈
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            blockchainService.verifyTransaction(transactionId: txId) { verified, message in
+                DispatchQueue.main.async {
+                    if verified {
+                        self.nfcMessage = "交易已在區塊鏈上確認! 交易ID: \(txId)"
+                        
+                        // 生成區塊鏈瀏覽器連結
+                        if let explorerURL = blockchainService.getTransactionExplorerURL(transactionId: txId) {
+                            print("交易瀏覽器連結: \(explorerURL.absoluteString)")
+                        }
+                    } else {
+                        self.nfcMessage = "警告: \(message ?? "交易可能尚未被區塊鏈確認，請稍後再檢查")"
+                    }
+                }
             }
         }
     }
