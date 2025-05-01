@@ -39,7 +39,7 @@ struct MainView: View {
                     // Write & Scan NFC Tag Buttons
                     if viewModel.isWalletConnected {
                         VStack(spacing: 16) {
-                            NavigationLink(destination: NFCWriteView(nfcService: viewModel.nfcService)) {
+                            NavigationLink(destination: NFCWriteView(nfcService: viewModel.nfcService, userAddress: viewModel.getWalletAddress())) {
                                 HStack {
                                     Image(systemName: "pencil.circle")
                                     Text("Write to NFC Tag")

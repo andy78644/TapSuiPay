@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct NFCWriteView: View {
-    @State private var recipient: String = ""
+    @State private var recipient: String
     @State private var amount: String = ""
     @ObservedObject var nfcService: NFCService
     @State private var showAlert = false
     @Environment(\.dismiss) private var dismiss
+    // 預設地址常數
+    private let defaultAddress = "0x2d33851553afbc0ffe801feda4eff72f1d0ae94c35f487cf581f350edbd21dd1"
     
     // 定義統一的顏色主題
     private let primaryColor = Color(red: 0.2, green: 0.5, blue: 0.9)
@@ -13,6 +15,13 @@ struct NFCWriteView: View {
     private let backgroundColor = Color(red: 0.98, green: 0.98, blue: 1.0)
     private let successColor = Color(red: 0.2, green: 0.8, blue: 0.4)
     private let errorColor = Color(red: 0.9, green: 0.3, blue: 0.3)
+    
+    // 初始化方法，接受用戶地址作為參數，並確保地址不為空
+    init(nfcService: NFCService, userAddress: String = "") {
+        self.nfcService = nfcService
+        // 如果提供的地址為空，則使用預設地址
+        self._recipient = State(initialValue: userAddress.isEmpty ? defaultAddress : userAddress)
+    }
     
     var body: some View {
         ZStack {
