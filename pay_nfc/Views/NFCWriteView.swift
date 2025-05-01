@@ -9,7 +9,12 @@ struct NFCWriteView: View {
     @State private var writeSuccess = false
     @State private var showSuccessPopup = false
     @State private var showCopiedToast = false
+    @State private var isProcessingTransaction = false
+    @State private var transactionResult: (success: Bool, message: String)? = nil
     @Environment(\.dismiss) private var dismiss
+    
+    // 使用 ServiceContainer 獲取 blockchainService
+    private let blockchainService: SUIBlockchainService
     
     // 幣種類型枚舉
     enum CoinType: String, CaseIterable, Identifiable {
@@ -47,6 +52,8 @@ struct NFCWriteView: View {
     // 初始化方法，接受用戶地址作為參數，並確保地址不為空
     init(nfcService: NFCService, userAddress: String = "") {
         self.nfcService = nfcService
+        // 使用共享的 blockchainService 實例
+        self.blockchainService = ServiceContainer.shared.blockchainService
         // 如果提供的地址為空，則使用預設地址
         self._recipient = State(initialValue: userAddress.isEmpty ? "" : userAddress)
     }

@@ -314,6 +314,41 @@ struct TransactionStateView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
+                
+                // 新增：顯示交易區塊鏈瀏覽器鏈接
+                if let url = viewModel.transactionUrl {
+                    Divider()
+                        .background(Color.black.opacity(0.1))
+                        
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "link.circle")
+                                .font(.system(size: 16))
+                                .foregroundColor(successColor.opacity(0.8))
+                            
+                            Text("區塊鏈瀏覽器:")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color.black.opacity(0.7))
+                        }
+                        
+                        Link(destination: url) {
+                            HStack {
+                                Text("在 SUI Explorer 中查看")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(primaryColor)
+                                
+                                Image(systemName: "arrow.up.right.square")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(primaryColor)
+                            }
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(primaryColor.opacity(0.1))
+                            )
+                        }
+                    }
+                }
             }
             .padding(16)
             .background(

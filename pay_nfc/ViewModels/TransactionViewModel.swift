@@ -6,10 +6,16 @@ class TransactionViewModel: ObservableObject {
     @Published var transactionState: TransactionState = .idle
     @Published var errorMessage: String?
     @Published var isWalletConnected: Bool = false
+    @Published var transactionUrl: URL?
     
     let nfcService: NFCService
     private let zkLoginService: SUIZkLoginService
+    private let blockchainService: SUIBlockchainService
     private var cancellables = Set<AnyCancellable>()
+    
+    // 新增：增加 NFC 狀態的重試機制
+    private var nfcRetryCount = 0
+    private let maxRetryCount = 2
     
     enum TransactionState {
         case idle
@@ -21,9 +27,12 @@ class TransactionViewModel: ObservableObject {
         case failed
     }
     
-    init(nfcService: NFCService = NFCService(), zkLoginService: SUIZkLoginService = SUIZkLoginService()) {
+    init(nfcService: NFCService = NFCService(), 
+         zkLoginService: SUIZkLoginService = SUIZkLoginService()) {
         self.nfcService = nfcService
         self.zkLoginService = zkLoginService
+        // 重要修改：將 zkLoginService 傳遞給 blockchainService
+        self.blockchainService = SUIBlockchainService(zkLoginService: zkLoginService)
         
         setupBindings()
         checkWalletConnection()
@@ -74,6 +83,42 @@ class TransactionViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+            
+        // 監聽 blockchainService 的交易狀態
+        blockchainService.$transactionStatus
+            .sink { [weak self] status in
+                switch status {
+                case .inProgress:
+                    self?.transactionState = .processing
+                case .completed:
+                    self?.transactionState = .completed
+                case .failed:
+                    self?.transactionState = .failed
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+            
+        // 監聽 blockchainService 的交易 ID 以獲取交易 URL
+        blockchainService.$transactionId
+            .compactMap { $0 }
+            .sink { [weak self] transactionId in
+                if let url = self?.blockchainService.getTransactionExplorerURL(transactionId: transactionId) {
+                    self?.transactionUrl = url
+                    print("交易區塊鏈瀏覽器 URL: \(url)")
+                }
+            }
+            .store(in: &cancellables)
+        
+        // 監聽 blockchainService 的錯誤訊息
+        blockchainService.$errorMessage
+            .compactMap { $0 }
+            .sink { [weak self] message in
+                self?.errorMessage = message
+                self?.transactionState = .failed
+            }
+            .store(in: &cancellables)
         
         nfcService.$transactionData
             .compactMap { $0 }
@@ -82,13 +127,42 @@ class TransactionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
+        // 改善對 NFC 錯誤訊息的處理
         nfcService.$nfcMessage
             .compactMap { $0 }
-            .filter { !$0.isEmpty && $0 != "Transaction data read successfully" }
             .sink { [weak self] message in
-                self?.errorMessage = message
-                if self?.transactionState == .scanning {
-                    self?.transactionState = .idle
+                guard let self = self else { return }
+                
+                // 如果是成功訊息就忽略
+                if message.contains("success") {
+                    self.nfcRetryCount = 0  // 重置重試計數
+                    return
+                }
+                
+                // 處理系統資源不可用錯誤
+                if message.contains("系統資源暫時不可用") || message.contains("System resource unavailable") {
+                    if self.nfcRetryCount < self.maxRetryCount {
+                        self.nfcRetryCount += 1
+                        // 延遲一秒後自動重試
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            print("⚠️ NFC 資源暫時不可用，正在進行第 \(self.nfcRetryCount) 次重試...")
+                            self.errorMessage = "NFC 讀取錯誤，正在重試..."
+                            // 重新啟動 NFC 掃描
+                            self.startNFCScan()
+                        }
+                    } else {
+                        // 已達最大重試次數
+                        self.errorMessage = "NFC 讀取失敗，請確認 NFC 功能已開啟並重新嘗試"
+                        self.transactionState = .idle
+                        self.nfcRetryCount = 0  // 重置重試計數
+                    }
+                } else if !message.isEmpty {
+                    // 其他錯誤訊息
+                    self.errorMessage = message
+                    if self.transactionState == .scanning {
+                        self.transactionState = .idle
+                    }
+                    self.nfcRetryCount = 0  // 重置重試計數
                 }
             }
             .store(in: &cancellables)
@@ -199,22 +273,59 @@ class TransactionViewModel: ObservableObject {
     
     func confirmAndSignTransaction() {
         guard let transaction = currentTransaction else {
-            errorMessage = "No transaction to confirm"
+            errorMessage = "尚無交易可確認"
             transactionState = .failed
             return
         }
         
         transactionState = .processing
         
-        // 在真实应用中，这里应该调用zkLoginService中的交易签名方法
-        // 目前模拟一个成功的交易
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            guard let self = self else { return }
-            
-            let txId = "0x" + String((0..<64).map { _ in "0123456789abcdef".randomElement()! })
-            self.currentTransaction?.transactionId = txId
-            self.currentTransaction?.status = .completed
-            self.transactionState = .completed
+        // 構建區塊鏈交易
+        if let blockchainTransaction = blockchainService.constructTransaction(
+            recipientAddress: transaction.recipientAddress,
+            amount: transaction.amount,
+            coinType: transaction.coinType
+        ) {
+            // 使用Face ID認證並簽署交易
+            blockchainService.authenticateAndSignTransaction(transaction: blockchainTransaction) { [weak self] success, message in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    if success, let txId = message {
+                        // 交易成功
+                        print("✅ 交易成功完成! 交易ID: \(txId)")
+                        self.currentTransaction?.transactionId = txId
+                        self.currentTransaction?.status = .completed
+                        self.transactionState = .completed
+                        
+                        // 設置交易瀏覽器 URL (如果不是通過綁定已經設置的話)
+                        if self.transactionUrl == nil {
+                            self.transactionUrl = self.blockchainService.getTransactionExplorerURL(transactionId: txId)
+                        }
+                        
+                        // 驗證交易是否真實存在於區塊鏈上
+                        self.blockchainService.verifyTransaction(transactionId: txId) { verified, verifyMessage in
+                            DispatchQueue.main.async {
+                                if verified {
+                                    print("✅ 交易已在區塊鏈上驗證成功!")
+                                } else {
+                                    print("⚠️ 交易驗證提示: \(verifyMessage ?? "未知狀態")")
+                                    // 即使驗證失敗也不改變成功狀態，因為可能只是網絡延遲
+                                }
+                            }
+                        }
+                    } else {
+                        // 交易失敗
+                        print("❌ 交易失敗: \(message ?? "未知錯誤")")
+                        self.errorMessage = message ?? "交易失敗，請稍後再試"
+                        self.currentTransaction?.status = .failed
+                        self.transactionState = .failed
+                    }
+                }
+            }
+        } else {
+            errorMessage = blockchainService.errorMessage ?? "無法建立交易，請稍後再試"
+            transactionState = .failed
         }
     }
     

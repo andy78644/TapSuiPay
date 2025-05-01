@@ -13,6 +13,11 @@ struct pay_nfcApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     init() {
+        // 初始化 ServiceContainer，確保在應用啟動時就準備好所有服務
+        // 這是一個簡單的訪問就會初始化的單例
+        let _ = ServiceContainer.shared
+        print("已在應用啟動時初始化服務容器")
+        
         // Apply all global styles at app startup
         AppStyle.applyGlobalStyles()
         

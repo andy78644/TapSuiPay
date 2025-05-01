@@ -4,9 +4,15 @@ import UIKit
 #endif
 
 struct MainView: View {
-    @StateObject private var viewModel = TransactionViewModel()
+    @StateObject private var viewModel: TransactionViewModel
     @State private var copied = false
     @State private var showAddressCopiedToast = false
+    
+    // 使用 init() 初始化 viewModel，確保使用 ServiceContainer 提供的服務
+    init() {
+        // 使用 _StateObject 包裝器初始化 @StateObject 屬性
+        _viewModel = StateObject(wrappedValue: ServiceContainer.shared.createTransactionViewModel())
+    }
     
     var body: some View {
         NavigationStack {
