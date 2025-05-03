@@ -350,9 +350,31 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         // For debugging - print the entire URL
         print("Full callback URL: \(url.absoluteString)")
         
-        // 无论回调URL如何，我们都会完成登录流程
-        // 在真实环境中应该验证URL参数，但为了测试目的，我们直接模拟成功
-        print("⚠️ 跳过URL验证，直接模拟成功登录...")
+        // 從URL解析認證碼
+        guard let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let code = urlComponents.queryItems?.first(where: { $0.name == "code" })?.value else {
+            print("❌ 無法從回調URL中提取 code")
+            DispatchQueue.main.async {
+                self.errorMessage = "認證失敗：無法獲取 code"
+                self.isAuthenticating = false
+            }
+            return
+        }
+        
+        print("✅ 成功提取 code: \(code.prefix(15))...")
+        
+        // 如果有 zkLoginService，優先使用它處理認證流程
+        if let zkLoginService = zkLoginService {
+            print("✅ 將認證流程轉交給 zkLoginService 處理")
+            // 使用提取的 code 開始 Token 交換流程
+            DispatchQueue.main.async {
+                zkLoginService.exchangeCodeForToken(code: code)
+            }
+            return
+        }
+        
+        // 如果沒有 zkLoginService，使用備用方法
+        print("⚠️ 無可用的 zkLoginService，使用模擬方式完成認證")
         
         // 设置一个模拟的JWT token用于演示
         self.jwtToken = "mock_jwt_token_" + generateSecureRandomString(length: 10)

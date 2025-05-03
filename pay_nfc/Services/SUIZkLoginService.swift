@@ -373,6 +373,84 @@ class SUIZkLoginService: NSObject, ObservableObject, ASWebAuthenticationPresenta
         return
     }
     
+    /// 使用授權碼交換 Token
+    func exchangeCodeForToken(code: String) {
+        print("開始使用 code 交換 token...")
+        
+        guard let clientId = AppConfig.shared.clientId, let redirectUri = AppConfig.shared.redirectUri else {
+            print("[配置錯誤] 缺少clientId或redirectUri")
+            DispatchQueue.main.async {
+                self.errorMessage = "認證失敗：配置錯誤"
+                self.isAuthenticating = false
+            }
+            return
+        }
+        
+        let tokenURL = URL(string: "https://oauth2.googleapis.com/token")!
+        var request = URLRequest(url: tokenURL)
+        request.httpMethod = "POST"
+        let params = [
+            "code": code,
+            "client_id": clientId,
+            "redirect_uri": redirectUri,
+            "grant_type": "authorization_code"
+        ]
+        request.httpBody = params.map { "\($0.key)=\($0.value)" }.joined(separator: "&").data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ 獲取Token失敗: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.errorMessage = "認證失敗：無法獲取Token: \(error.localizedDescription)"
+                    self.isAuthenticating = false
+                }
+                return
+            }
+            
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                print("❌ Token響應解析失敗")
+                DispatchQueue.main.async {
+                    self.errorMessage = "認證失敗：Token響應解析失敗"
+                    self.isAuthenticating = false
+                }
+                return
+            }
+            
+            let idToken = json["id_token"] as? String
+            let accessToken = json["access_token"] as? String
+            
+            guard let token = idToken else {
+                print("❌ 無法從Token響應中提取ID token")
+                DispatchQueue.main.async {
+                    self.errorMessage = "認證失敗：無法獲取ID token"
+                    self.isAuthenticating = false
+                }
+                return
+            }
+            
+            // 保存tokens
+            self.jwtToken = token
+            UserDefaults.standard.set(token, forKey: self.jwtKey)
+            
+            if let accessToken = accessToken {
+                print("✅ 成功提取access token: \(accessToken.prefix(15))...")
+                // 可以選擇保存access token用於API調用
+            }
+            
+            print("✅ 成功提取ID token: \(token.prefix(15))...")
+            
+            // 3. 完成zkLogin流程
+            DispatchQueue.main.async {
+                self.completeZkLogin(idToken: token)
+            }
+        }
+        task.resume()
+    }
+    
     /// 从UserDefaults加载用户数据
     private func loadUserData() {
         if let salt = UserDefaults.standard.string(forKey: saltKey) {
