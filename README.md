@@ -1,7 +1,7 @@
 
-# TapSuiPay - SUI NFC Transaction Application
+# Zyra - SUI NFC Transaction Application
 
-TapSuiPay is a payment app that makes sending money easy and safe using your phone. It uses NFC technology (like tapping your phone to pay) and the Sui blockchain to keep things fast and secure. Here’s how it works and why it’s useful:
+Zyra is a payment app that makes sending money easy and safe using your phone. It uses NFC technology (like tapping your phone to pay) and the Sui blockchain to keep things fast and secure. Here’s how it works and why it’s useful:
 
 ## How It Works
 1. **Tap to Start**: Just tap your phone on an NFC tag to begin a payment.
@@ -18,7 +18,7 @@ You’ll set up a wallet in the app using zkLogin. This wallet holds your money 
 - **Easy**: No typing your info every time—the app does it for you.
 - **Safe**: FaceID and the blockchain keep your money protected.
 
-TapSuiPay makes paying for things or sending money simple and worry-free. It’s practical for everyday use, whether you’re shopping or splitting a bill.
+Zyra makes paying for things or sending money simple and worry-free. It’s practical for everyday use, whether you’re shopping or splitting a bill.
 
 ---
 
@@ -72,4 +72,4 @@ This application currently uses simulated blockchain integration. In a productio
 
 ---
 
-TapSuiPay is designed to make blockchain payments as easy as tapping your phone. With NFC and FaceID, it’s fast, secure, and simple to use. Try it out and experience the future of payments today!
+Zyra is designed to make blockchain payments as easy as tapping your phone. With NFC and FaceID, it’s fast, secure, and simple to use. Try it out and experience the future of payments today!
