@@ -39,10 +39,10 @@
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>CFBundleURLName</key>
-            <string>com.sui.paynfc</string>
+            <string>com.sui.zyra</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>suipay</string>
+                <string>zyra</string>
             </array>
         </dict>
         <dict>
@@ -78,14 +78,5 @@
     </array>
     <key>GIDClientID</key>
     <string>179459479770-aeoaa73k7savslnhbrru749l8jqcno6q.apps.googleusercontent.com</string>
-    <key>CFBundleURLTypes</key>
-    <array>
-    <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-        <string>com.googleusercontent.apps.179459479770-aeoaa73k7savslnhbrru749l8jqcno6q</string>
-        </array>
-    </dict>
-    </array>
 </dict>
 </plist>

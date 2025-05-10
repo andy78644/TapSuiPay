@@ -62,8 +62,14 @@ class TransactionViewModel: ObservableObject {
         // Bind NFC service scanning state
         nfcService.$isScanning
             .sink { [weak self] isScanning in
+                // 當 isScanning 變為 false 且當前狀態是 scanning 時，重置狀態為 idle
                 if isScanning {
                     self?.transactionState = .scanning
+                } else if self?.transactionState == .scanning {
+                    // 重要修改：當掃描停止且當前處於掃描狀態時，重置為空閒狀態
+                    DispatchQueue.main.async {
+                        self?.transactionState = .idle
+                    }
                 }
             }
             .store(in: &cancellables)

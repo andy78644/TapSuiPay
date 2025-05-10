@@ -409,7 +409,7 @@ struct NFCWriteView: View {
                     .foregroundColor(primaryColor.opacity(0.7))
                     .font(.system(size: 14))
                 
-                Text("該標籤已可以使用 SUI NFC Pay 應用進行掃描支付")
+                Text("該標籤已可以使用 Zyra 應用進行掃描支付")
                     .font(.system(size: 14))
                     .foregroundColor(Color.black.opacity(0.6))
             }

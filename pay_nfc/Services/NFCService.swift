@@ -30,6 +30,17 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         super.init()
     }
     
+    // 新增方法：清除NFC相關狀態
+    private func resetNFCState() {
+        DispatchQueue.main.async {
+            self.isScanning = false
+            self.isSessionActive = false
+            self.session = nil
+            // 清除NFC訊息，取消時就不會顯示訊息了
+            self.nfcMessage = nil
+        }
+    }
+    
     func startScanning() {
         // 檢查會話是否已經在運行中
         guard !isSessionActive else {
@@ -224,16 +235,22 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             self.isScanning = false
             self.isSessionActive = false
             
+            // 用戶取消時，清除所有狀態與訊息
+            if isUserCancellation {
+                self.resetNFCState()
+                return
+            }
+            
             // 只有在尚未設置成功消息且不是用戶取消的情況下，才設置錯誤消息
-            if !(self.nfcMessage?.contains("success") == true) && !isUserCancellation {
+            if !(self.nfcMessage?.contains("success") == true) {
                 if isResourceUnavailable {
                     self.nfcMessage = "NFC 系統資源暫時不可用，請確認 NFC 功能已啟用且稍後再試"
                     print("⚠️ NFC 系統資源暫時不可用，可能需要重啟應用或設備")
                 } else {
                     self.nfcMessage = errorMessage
                 }
-            } else if isUserCancellation && self.writePayload != nil {
-                // 如果是用戶取消但我們剛剛在嘗試寫入，可能是寫入成功但會話仍然被關閉
+            } else if self.writePayload != nil {
+                // 如果我們剛剛在嘗試寫入，可能是寫入成功但會話仍然被關閉
                 // 在這種情況下保持可能已經設置的成功消息，或設置一個通用的成功消息
                 if self.nfcMessage == nil || !self.nfcMessage!.contains("success") {
                     self.nfcMessage = "標籤寫入成功"
@@ -250,10 +267,11 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         guard let message = messages.first,
               let record = message.records.first else {
             DispatchQueue.main.async {
-                self.nfcMessage = "No valid records found in NFC tag"
+                self.nfcMessage = nil  // 設置為 nil 而不是錯誤訊息
                 self.isScanning = false
                 self.isSessionActive = false
             }
+            session.invalidate()  // 不傳送錯誤訊息
             return
         }
         
@@ -273,11 +291,11 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             if let payloadString = String(data: payloadData, encoding: .utf8) {
                 payload = payloadString
             } else {
+                // 解碼失敗時不顯示錯誤訊息
                 DispatchQueue.main.async {
-                    self.nfcMessage = "Could not decode payload as UTF-8"
-                    self.isScanning = false
-                    self.isSessionActive = false
+                    self.resetNFCState()  // 使用重置方法，確保清除所有狀態
                 }
+                session.invalidate()
                 return
             }
             
@@ -285,27 +303,27 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             if let payloadString = String(data: record.payload, encoding: .utf8) {
                 payload = payloadString
             } else {
+                // 解碼失敗時不顯示錯誤訊息
                 DispatchQueue.main.async {
-                    self.nfcMessage = "Could not decode media payload as UTF-8"
-                    self.isScanning = false
-                    self.isSessionActive = false
+                    self.resetNFCState()
                 }
+                session.invalidate()
                 return
             }
             
         default:
+            // 不支援的格式時不顯示錯誤訊息
             DispatchQueue.main.async {
-                self.nfcMessage = "Unsupported record type: \(record.typeNameFormat)"
-                self.isScanning = false
-                self.isSessionActive = false
+                self.resetNFCState()
             }
+            session.invalidate()
             return
         }
         
         // Successfully read the payload, now parse it
         parseTransactionData(from: payload)
         
-        // Close the session with success message
+        // Close the session with success message but不顯示持續的訊息
         session.alertMessage = "Transaction data read successfully"
         session.invalidate()
     }
@@ -316,9 +334,8 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         guard !payload.isEmpty else {
             DispatchQueue.main.async {
                 self.transactionData = nil
-                self.nfcMessage = "讀取到空白內容，請確認 NFC 標籤已正確寫入資料"
-                self.isScanning = false
-                self.isSessionActive = false
+                // 清除訊息而不是顯示錯誤
+                self.resetNFCState()
             }
             return
         }
@@ -388,7 +405,8 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                 // 檢查是否包含必要的交易資訊
                 let hasMissingFields = data["recipient"] == nil || data["amount"] == nil
                 if !hasMissingFields {
-                    self.nfcMessage = "Transaction data read successfully"
+                    // 成功讀取訊息，但不設置持續顯示的訊息
+                    self.nfcMessage = nil
                 } else {
                     // 資料存在但缺少關鍵欄位
                     let missingFields = [
@@ -396,14 +414,16 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                         data["amount"] == nil ? "amount" : nil
                     ].compactMap { $0 }.joined(separator: ", ")
                     
-                    self.nfcMessage = "讀取到不完整的交易資料，缺少: \(missingFields)，請確認 NFC 標籤格式"
                     print("❌ 缺少關鍵欄位: \(missingFields)")
+                    // 不設置錯誤訊息，防止彈出視窗持續顯示
+                    self.nfcMessage = nil
                 }
             } else {
                 // 沒有找到任何有效的鍵值對
                 self.transactionData = nil
-                self.nfcMessage = "無法辨識的交易資料格式: \(payload)"
                 print("❌ 無法解析 NFC 標籤內容")
+                // 不設置錯誤訊息
+                self.nfcMessage = nil
             }
             self.isScanning = false
             self.isSessionActive = false
@@ -413,28 +433,48 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     @available(iOS 13.0, *)
     func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
         guard let tag = tags.first else {
-            session.invalidate(errorMessage: "No tag found")
+            // 標籤不存在時不顯示錯誤
+            DispatchQueue.main.async {
+                self.resetNFCState()
+            }
+            session.invalidate()
             return
         }
 
         session.connect(to: tag) { error in
         if let error = error {
-            session.invalidate(errorMessage: "Connection error: \(error.localizedDescription)")
+            // 連接錯誤時不顯示錯誤訊息
+            DispatchQueue.main.async {
+                self.resetNFCState()
+            }
+            session.invalidate()
             return
         }
 
         tag.queryNDEFStatus { status, capacity, error in
             if let error = error {
-                session.invalidate(errorMessage: "Query status error: \(error.localizedDescription)")
+                // 查詢狀態錯誤時不顯示錯誤訊息
+                DispatchQueue.main.async {
+                    self.resetNFCState()
+                }
+                session.invalidate()
                 return
             }
 
             switch status {
             case .notSupported:
-                session.invalidate(errorMessage: "Tag is not NDEF compliant")
+                // 不支援NDEF時不顯示錯誤訊息
+                DispatchQueue.main.async {
+                    self.resetNFCState()
+                }
+                session.invalidate()
 
             case .readOnly:
-                session.invalidate(errorMessage: "Tag is read-only and cannot be written")
+                // 只讀標籤時不顯示錯誤訊息
+                DispatchQueue.main.async {
+                    self.resetNFCState()
+                }
+                session.invalidate()
 
             case .readWrite:
                 if let payloadString = self.writePayload {
@@ -462,15 +502,20 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                             self.isSessionActive = false
                         }
                         if let error = error {
-                            session.invalidate(errorMessage: "Write error: \(error.localizedDescription)")
+                            // 寫入錯誤時不顯示持續的錯誤訊息
                             DispatchQueue.main.async {
-                                self.nfcMessage = "Write error: \(error.localizedDescription)"
+                                self.resetNFCState()
                             }
+                            session.invalidate()
                         } else {
+                            // 寫入成功，顯示一個簡短的成功訊息然後結束
                             session.alertMessage = "Successfully wrote to NFC tag"
                             session.invalidate()
+                            // 在主線程更新UI狀態，但不設置持續的訊息
                             DispatchQueue.main.async {
-                                self.nfcMessage = "Write success: \(payloadString)"
+                                print("Write success: \(payloadString)")
+                                // 寫入成功後不顯示持續的訊息
+                                self.nfcMessage = nil
                             }
                         }
                     }
@@ -493,7 +538,11 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                 }
 
             @unknown default:
-                session.invalidate(errorMessage: "Unknown tag status")
+                // 未知狀態時不顯示錯誤訊息
+                DispatchQueue.main.async {
+                    self.resetNFCState()
+                }
+                session.invalidate()
             }
         }
     }

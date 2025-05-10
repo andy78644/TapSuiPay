@@ -333,7 +333,7 @@ struct TransactionStateView: View {
                         
                         Link(destination: url) {
                             HStack {
-                                Text("在 SUI Explorer 中查看")
+                                Text("在 Zyra Explorer 中查看")
                                     .font(.system(size: 14))
                                     .foregroundColor(primaryColor)
                                 

@@ -26,11 +26,11 @@ struct MainView: View {
                             .frame(width: 100, height: 100)
                             .foregroundColor(.blue)
                         
-                        Text("SUI NFC Pay")
+                        Text("Zyra")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                         
-                        Text("Secure payments with Face ID and NFC")
+                        Text("Zyra")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
