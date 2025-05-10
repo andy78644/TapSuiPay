@@ -48,9 +48,17 @@ struct ContentView: View {
                                 .shadow(color: primaryColor.opacity(0.5), radius: 4, x: 0, y: 2)
                         }
                         
-                        Text("SUI NFC Pay")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .foregroundColor(Color.black.opacity(0.8))
+                        Text("Zyra")
+                            .font(.system(size: 38, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(red: 0.2, green: 0.5, blue: 0.9))
+                            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 1, y: 1)
+                        
+                        Text("SUI NFC PAY")
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundColor(Color(red: 0.3, green: 0.6, blue: 0.9))
+                            .tracking(2) // 增加字母間距
+                            .padding(.top, -5)
+                            .padding(.bottom, 2)
                         
                         Text("Secure payments with Face ID and NFC")
                             .font(.system(size: 16, weight: .medium, design: .rounded))
