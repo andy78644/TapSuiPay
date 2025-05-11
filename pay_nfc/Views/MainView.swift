@@ -8,6 +8,12 @@ struct MainView: View {
     @State private var copied = false
     @State private var showAddressCopiedToast = false
     
+    // 定義統一的顏色主題
+    private let primaryColor = Color(red: 0.2, green: 0.5, blue: 0.9)
+    private let secondaryColor = Color(red: 0.9, green: 0.5, blue: 0.2)
+    private let backgroundColor = Color(red: 0.98, green: 0.98, blue: 1.0)
+    private let cardBackgroundColor = Color.white
+    
     // 使用 init() 初始化 viewModel，確保使用 ServiceContainer 提供的服務
     init() {
         // 使用 _StateObject 包裝器初始化 @StateObject 屬性
@@ -20,11 +26,19 @@ struct MainView: View {
                 VStack(spacing: 30) {
                     // Logo and Header
                     VStack(spacing: 10) {
-                        Image(systemName: "wave.3.right.circle.fill")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(.blue)
+                        ZStack {
+                            Circle()
+                                .fill(primaryColor.opacity(0.1))
+                                .frame(width: 100, height: 100)
+                            
+                            Image("ZyraLogo")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 90, height: 90)
+                                .clipShape(Circle())
+                                .shadow(color: primaryColor.opacity(0.3), radius: 3, x: 0, y: 2)
+                        }
+                        .padding(.bottom, 10)
                         
                         Text("Zyra")
                             .font(.largeTitle)

@@ -40,11 +40,11 @@ struct ContentView: View {
                                 .fill(primaryColor.opacity(0.1))
                                 .frame(width: 120, height: 120)
                             
-                            Image(systemName: "wave.3.right.circle.fill")
+                            Image("ZyraLogo")
                                 .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 80, height: 80)
-                                .foregroundColor(primaryColor)
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
                                 .shadow(color: primaryColor.opacity(0.5), radius: 4, x: 0, y: 2)
                         }
                         
