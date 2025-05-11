@@ -16,27 +16,37 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <!-- 背景圓形 - 使用與 ContentView 相同的樣式 -->
-                            <view alpha="0.1" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bgCircle">
-                                <rect key="frame" x="146.66666666666666" y="260" width="100" height="100"/>
-                                <color key="backgroundColor" red="0.20000000000000001" green="0.5" blue="0.90000000000000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <!-- 背景圓形 - 使用圓形視圖 -->
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bgCircle">
+                                <rect key="frame" x="146.66666666666666" y="276" width="100" height="100"/>
+                                <color key="backgroundColor" red="0.20000000000000001" green="0.5" blue="0.90000000000000002" alpha="0.10000000000000001" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="100" id="bg-width"/>
                                     <constraint firstAttribute="height" constant="100" id="bg-height"/>
                                 </constraints>
                             </view>
                             
-                            <!-- 圖片視圖 - 改用 ZyraLogo 並設置圓形遮罩 -->
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ZyraLogo" translatesAutoresizingMaskIntoConstraints="NO" id="logoImageView">
-                                <rect key="frame" x="156.66666666666666" y="270" width="80" height="80"/>
+                            <!-- 使用橢圓形 (Oval) 作為遮罩，迫使 iOS 在啟動畫面中使用圓形裁剪 -->
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="maskContainer">
+                                <rect key="frame" x="156.66666666666666" y="286" width="80" height="80"/>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.9" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ZyraLogo" translatesAutoresizingMaskIntoConstraints="NO" id="logoImageView">
+                                        <rect key="frame" x="0.0" y="0.0" width="80" height="80"/>
+                                    </imageView>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="80" id="img-width"/>
-                                    <constraint firstAttribute="height" constant="80" id="img-height"/>
+                                    <constraint firstItem="logoImageView" firstAttribute="leading" secondItem="maskContainer" secondAttribute="leading" id="1qO-bN-bav"/>
+                                    <constraint firstAttribute="trailing" secondItem="logoImageView" secondAttribute="trailing" id="HKQ-Cv-MR1"/>
+                                    <constraint firstAttribute="bottom" secondItem="logoImageView" secondAttribute="bottom" id="Ih3-e6-SWK"/>
+                                    <constraint firstAttribute="width" constant="80" id="cSm-A7-E1d"/>
+                                    <constraint firstItem="logoImageView" firstAttribute="top" secondItem="maskContainer" secondAttribute="top" id="fQe-Z3-aJc"/>
+                                    <constraint firstAttribute="height" constant="80" id="qfJ-A4-tAq"/>
                                 </constraints>
-                            </imageView>
+                            </view>
                             
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Zyra" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Gg-Yb-Xtc">
-                                <rect key="frame" x="150.66666666666666" y="380" width="92" height="41"/>
+                                <rect key="frame" x="150.66666666666666" y="396" width="92" height="41"/>
                                 <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="34"/>
                                 <color key="textColor" red="0.20000000000000001" green="0.5" blue="0.90000000000000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
@@ -45,23 +55,33 @@
                             </label>
                             
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="SUI NFC PAY" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="new-label-id">
-                                <rect key="frame" x="146" y="426" width="100" height="20"/>
+                                <rect key="frame" x="146" y="442" width="100" height="20"/>
                                 <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="16"/>
                                 <color key="textColor" red="0.29999999999999999" green="0.59999999999999998" blue="0.90000000000000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            
+                            <!-- 使用單獨的白色圓形遮罩，確保圖片顯示為圓形 -->
+                            <view alpha="0" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="circleClipView">
+                                <rect key="frame" x="146.66666666666666" y="276" width="100" height="100"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="bgCircle" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="1rO-Lh-iMg"/>
+                            <constraint firstItem="maskContainer" firstAttribute="centerY" secondItem="bgCircle" secondAttribute="centerY" id="6nM-ks-7d6"/>
+                            <constraint firstItem="circleClipView" firstAttribute="centerY" secondItem="bgCircle" secondAttribute="centerY" id="7L7-JN-e37"/>
+                            <constraint firstItem="circleClipView" firstAttribute="height" secondItem="bgCircle" secondAttribute="height" id="CQ1-X5-BsZ"/>
+                            <constraint firstItem="new-label-id" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="EXb-1n-rnj"/>
+                            <constraint firstItem="circleClipView" firstAttribute="width" secondItem="bgCircle" secondAttribute="width" id="FUf-OG-U13"/>
                             <constraint firstItem="5Gg-Yb-Xtc" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="LWD-Yd-Lfb"/>
-                            <constraint firstItem="logoImageView" firstAttribute="centerX" secondItem="bgCircle" secondAttribute="centerX" id="logo-x"/>
-                            <constraint firstItem="logoImageView" firstAttribute="centerY" secondItem="bgCircle" secondAttribute="centerY" id="logo-y"/>
-                            <constraint firstItem="new-label-id" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="NEW-CONSTRAINT-1"/>
-                            <constraint firstItem="new-label-id" firstAttribute="top" secondItem="5Gg-Yb-Xtc" secondAttribute="bottom" constant="5" id="NEW-CONSTRAINT-2"/>
-                            <constraint firstItem="5Gg-Yb-Xtc" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-25" id="Qxl-Ld-zDU"/>
+                            <constraint firstItem="maskContainer" firstAttribute="centerX" secondItem="bgCircle" secondAttribute="centerX" id="OO0-mQ-TIG"/>
+                            <constraint firstItem="new-label-id" firstAttribute="top" secondItem="5Gg-Yb-Xtc" secondAttribute="bottom" constant="5" id="QZi-2L-uRQ"/>
                             <constraint firstItem="5Gg-Yb-Xtc" firstAttribute="top" secondItem="bgCircle" secondAttribute="bottom" constant="20" id="Vqy-Yw-Jbh"/>
-                            <constraint firstItem="bgCircle" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="bgCenterX"/>
+                            <constraint firstItem="5Gg-Yb-Xtc" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-10" id="YNT-zL-SSY"/>
+                            <constraint firstItem="circleClipView" firstAttribute="centerX" secondItem="bgCircle" secondAttribute="centerX" id="oZv-vB-iQd"/>
                         </constraints>
                     </view>
                 </viewController>
