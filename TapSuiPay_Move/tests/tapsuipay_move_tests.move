@@ -13,7 +13,6 @@ module tapsuipay_move::tapsuipay_move_tests {
     const MERCHANT1: address = @0x42;
     const MERCHANT2: address = @0x43;
     const USER1: address = @0x100;
-    const USER2: address = @0x101;
 
     // 初始化測試場景
     fun scenario(): Scenario {
@@ -125,18 +124,23 @@ module tapsuipay_move::tapsuipay_move_tests {
             let product_info = b"Test Product 1";
             let payment_amount = 100000000; // 0.1 SUI
             
-            // 創建 SUI 代幣用於支付
-            let payment = coin::mint_for_testing<SUI>(payment_amount, ctx(&mut scenario));
-            
-            // 獲取商家初始餘額
-            let mut merchant_initial_balance = 0;
-            if (has_most_recent_for_address<Coin<SUI>>(MERCHANT1)) {
-                let coin = take_from_address<Coin<SUI>>(&scenario, MERCHANT1);
-                merchant_initial_balance = coin::value(&coin);
-                return_to_address(MERCHANT1, coin);
+            // Get merchant's initial balance by retrieving all coins and summing their values
+            let merchant_initial_balance = {
+                let mut total = 0;
+                // Check if the merchant has any SUI coins
+                if (test_scenario::has_most_recent_for_address<Coin<SUI>>(MERCHANT1)) {
+                    let coin = test_scenario::take_from_address<Coin<SUI>>(&scenario, MERCHANT1);
+                    total = coin::value(&coin);
+                    test_scenario::return_to_address(MERCHANT1, coin);
+                };
+                total
             };
             
-            // 進行支付
+            
+            // Create SUI coin for payment
+            let payment = coin::mint_for_testing<SUI>(payment_amount, ctx(&mut scenario));
+            
+            // Make the purchase
             tapsuipay::purchase(
                 &mut registry, 
                 merchant_name,
@@ -145,14 +149,24 @@ module tapsuipay_move::tapsuipay_move_tests {
                 ctx(&mut scenario)
             );
             
-            // 驗證商家的餘額是否增加
-            let mut merchant_new_balance = 0;
-            if (has_most_recent_for_address<Coin<SUI>>(MERCHANT1)) {
-                let coin = take_from_address<Coin<SUI>>(&scenario, MERCHANT1);
-                merchant_new_balance = coin::value(&coin);
-                return_to_address(MERCHANT1, coin);
+            // Force the next transaction to process any pending transfers
+            test_scenario::next_tx(&mut scenario, USER1);
+            
+            // Check merchant's new balance
+            let merchant_new_balance = {
+                let mut total = 0;
+                // Check if the merchant has any SUI coins
+                if (test_scenario::has_most_recent_for_address<Coin<SUI>>(MERCHANT1)) {
+                    let coin = test_scenario::take_from_address<Coin<SUI>>(&scenario, MERCHANT1);
+                    total = coin::value(&coin);
+                    test_scenario::return_to_address(MERCHANT1, coin);
+                };
+                total
             };
-            assert_eq(merchant_new_balance, merchant_initial_balance + payment_amount);
+            
+            
+            // Verify the balance increased by payment amount
+            assert!(merchant_new_balance == merchant_initial_balance + payment_amount, 0);
             
             return_shared(registry);
         };
@@ -160,159 +174,159 @@ module tapsuipay_move::tapsuipay_move_tests {
         end(scenario);
     }
 
-    // // 測試管理員移除商家功能
-    // #[test]
-    // fun test_admin_remove_merchant() {
-    //     let mut scenario = setup_test();
+    // 測試管理員移除商家功能
+    #[test]
+    fun test_admin_remove_merchant() {
+        let mut scenario = scenario();
         
-    //     // 註冊商家
-    //     next_tx(&mut scenario, MERCHANT1);
-    //     {
-    //         let registry = take_shared<MerchantRegistry>(&scenario);
-    //         let merchant_name = b"RemoveTest";
+        // 註冊商家
+        next_tx(&mut scenario, MERCHANT1);
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let merchant_name = b"RemoveTest";
             
-    //         tapsuipay_move::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
-    //         return_shared(registry);
-    //     };
+            tapsuipay::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
+            return_shared(registry);
+        };
         
-    //     // 管理員移除商家
-    //     next_tx(&mut scenario, ADMIN);
-    //     {
-    //         let mut registry = take_shared<MerchantRegistry>(&scenario);
-    //         let admin_cap = take_from_address<AdminCap>(&scenario, ADMIN);
-    //         let merchant_name = b"RemoveTest";
+        // 管理員移除商家
+        next_tx(&mut scenario, ADMIN);
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let admin_cap = take_from_address<AdminCap>(&scenario, ADMIN);
+            let merchant_name = b"RemoveTest";
             
-    //         // 驗證商家存在
-    //         assert!(tapsuipay_move::merchant_exists(&registry, merchant_name), 0);
+            // 驗證商家存在
+            assert!(tapsuipay::merchant_exists(&registry, merchant_name), 0);
             
-    //         // 管理員移除商家
-    //         tapsuipay_move::admin_remove_merchant(&admin_cap, &mut registry, merchant_name);
+            // 管理員移除商家
+            tapsuipay::admin_remove_merchant(&admin_cap, &mut registry, merchant_name);
             
-    //         // 驗證商家已被移除
-    //         assert!(!tapsuipay_move::merchant_exists(&registry, merchant_name), 0);
+            // 驗證商家已被移除
+            assert!(!tapsuipay::merchant_exists(&registry, merchant_name), 0);
             
-    //         return_to_address(ADMIN, admin_cap);
-    //         return_shared(registry);
-    //     };
+            return_to_address(ADMIN, admin_cap);
+            return_shared(registry);
+        };
         
-    //     end(scenario);
-    // }
+        end(scenario);
+    }
 
-    // // 測試商家名稱錯誤情況
-    // #[test]
-    // #[expected_failure(abort_code = tapsuipay_move::tapsuipay_move::EInvalidMerchantName)]
-    // fun test_invalid_merchant_name_short() {
-    //     let mut scenario = setup_test();
+    // 測試商家名稱錯誤情況
+    #[test]
+    #[expected_failure(abort_code = tapsuipay_move::tapsuipay::EInvalidMerchantName)]
+    fun test_invalid_merchant_name_short() {
+        let mut scenario = scenario();
         
-    //     next_tx(&mut scenario, MERCHANT1);
-    //     {
-    //         let mut registry = take_shared<MerchantRegistry>(&scenario);
-    //         let merchant_name = b"AB"; // 名稱太短 (最小長度為3)
+        next_tx(&mut scenario, MERCHANT1);
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let merchant_name = b"AB"; // 名稱太短 (最小長度為3)
             
-    //         tapsuipay_move::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
+            tapsuipay::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
             
-    //         return_shared(registry);
-    //     };
+            return_shared(registry);
+        };
         
-    //     end(scenario);
-    // }
+        end(scenario);
+    }
 
-    // // 測試商家名稱重複註冊
-    // #[test]
-    // #[expected_failure(abort_code = tapsuipay_move::tapsuipay_move::EMerchantNameTaken)]
-    // fun test_duplicate_merchant_name() {
-    //     let mut scenario = setup_test();
+    // 測試商家名稱重複註冊
+    #[test]
+    #[expected_failure(abort_code = tapsuipay_move::tapsuipay::EMerchantNameTaken)]
+    fun test_duplicate_merchant_name() {
+        let mut scenario = scenario();
         
-    //     // 第一次註冊
-    //     next_tx(&mut scenario, MERCHANT1);
-    //     {
-    //         let mut registry = take_shared<MerchantRegistry>(&scenario);
-    //         let merchant_name = b"DuplicateTest";
+        // 第一次註冊
+        next_tx(&mut scenario, MERCHANT1);
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let merchant_name = b"DuplicateTest";
             
-    //         tapsuipay_move::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
-    //         return_shared(registry);
-    //     };
+            tapsuipay::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
+            return_shared(registry);
+        };
         
-    //     // 重複註冊同一個名稱
-    //     next_tx(&mut scenario, MERCHANT2);
-    //     {
-    //         let mut registry = take_shared<MerchantRegistry>(&scenario);
-    //         let merchant_name = b"DuplicateTest";
+        // 重複註冊同一個名稱
+        next_tx(&mut scenario, MERCHANT2);
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let merchant_name = b"DuplicateTest";
             
-    //         // 這裡應該失敗，因為名稱已被使用
-    //         tapsuipay_move::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
+            // 這裡應該失敗，因為名稱已被使用
+            tapsuipay::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
             
-    //         return_shared(registry);
-    //     };
+            return_shared(registry);
+        };
         
-    //     end(scenario);
-    // }
+        end(scenario);
+    }
 
-    // // 測試非商家擁有者嘗試更新地址
-    // #[test]
-    // #[expected_failure(abort_code = tapsuipay_move::tapsuipay_move::ENotMerchantOwner)]
-    // fun test_unauthorized_update() {
-    //     let mut scenario = setup_test();
+    // 測試非商家擁有者嘗試更新地址
+    #[test]
+    #[expected_failure(abort_code = tapsuipay_move::tapsuipay::ENotMerchantOwner)]
+    fun test_unauthorized_update() {
+        let mut scenario = scenario();
         
-    //     // 先註冊商家
-    //     next_tx(&mut scenario, MERCHANT1);
-    //     {
-    //         let registry = take_shared<MerchantRegistry>(&scenario);
-    //         let merchant_name = b"AuthTest";
+        // 先註冊商家
+        next_tx(&mut scenario, MERCHANT1);
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let merchant_name = b"AuthTest";
             
-    //         tapsuipay_move::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
-    //         return_shared(registry);
-    //     };
+            tapsuipay::register_merchant(&mut registry, merchant_name, ctx(&mut scenario));
+            return_shared(registry);
+        };
         
-    //     // 另一個用戶嘗試更新商家地址
-    //     next_tx(&mut scenario, MERCHANT2); // 非商家擁有者
-    //     {
-    //         let mut registry = take_shared<MerchantRegistry>(&scenario);
-    //         let merchant_name = b"AuthTest";
-    //         let new_address = MERCHANT2;
+        // 另一個用戶嘗試更新商家地址
+        next_tx(&mut scenario, MERCHANT2); // 非商家擁有者
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let merchant_name = b"AuthTest";
+            let new_address = MERCHANT2;
             
-    //         // 這裡應該失敗，因為 MERCHANT2 不是商家擁有者
-    //         tapsuipay_move::update_merchant_address(
-    //             &mut registry, 
-    //             merchant_name, 
-    //             new_address, 
-    //             ctx(&mut scenario)
-    //         );
+            // 這裡應該失敗，因為 MERCHANT2 不是商家擁有者
+            tapsuipay::update_merchant_address(
+                &mut registry, 
+                merchant_name, 
+                new_address, 
+                ctx(&mut scenario)
+            );
             
-    //         return_shared(registry);
-    //     };
+            return_shared(registry);
+        };
         
-    //     end(scenario);
-    // }
+        end(scenario);
+    }
 
-    // // 測試支付不存在的商家
-    // #[test]
-    // #[expected_failure(abort_code = tapsuipay_move::tapsuipay_move::EMerchantNotExists)]
-    // fun test_pay_nonexistent_merchant() {
-    //     let mut scenario = setup_test();
+    // 測試支付不存在的商家
+    #[test]
+    #[expected_failure(abort_code = tapsuipay_move::tapsuipay::EMerchantNotExists)]
+    fun test_pay_nonexistent_merchant() {
+        let mut scenario = scenario();
         
-    //     next_tx(&mut scenario, USER1);
-    //     {
-    //         let mut registry = take_shared<MerchantRegistry>(&scenario);
-    //         let merchant_name = b"NonExistentShop";
-    //         let product_info = b"Test Product";
-    //         let payment_amount = 100000000; // 0.1 SUI
+        next_tx(&mut scenario, USER1);
+        {
+            let mut registry = take_shared<MerchantRegistry>(&scenario);
+            let merchant_name = b"NonExistentShop";
+            let product_info = b"Test Product";
+            let payment_amount = 100000000; // 0.1 SUI
             
-    //         // 創建 SUI 代幣用於支付
-    //         let payment = coin::mint_for_testing<SUI>(payment_amount, ctx(&mut scenario));
+            // 創建 SUI 代幣用於支付
+            let payment = coin::mint_for_testing<SUI>(payment_amount, ctx(&mut scenario));
             
-    //         // 嘗試向不存在的商家支付
-    //         tapsuipay_move::purchase(
-    //             &mut registry, 
-    //             merchant_name, 
-    //             product_info, 
-    //             payment, 
-    //             ctx(&mut scenario)
-    //         );
+            // 嘗試向不存在的商家支付
+            tapsuipay::purchase(
+                &mut registry, 
+                merchant_name, 
+                product_info, 
+                payment, 
+                ctx(&mut scenario)
+            );
             
-    //         return_shared(registry);
-    //     };
+            return_shared(registry);
+        };
         
-    //     end(scenario);
-    // }
+        end(scenario);
+    }
 }
