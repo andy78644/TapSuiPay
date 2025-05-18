@@ -9,8 +9,8 @@ class TransactionViewModel: ObservableObject {
     @Published var transactionUrl: URL?
     
     let nfcService: NFCService
-    private let zkLoginService: SUIZkLoginService
-    private let blockchainService: SUIBlockchainService
+    let walletManager: ZkLoginWalletManager
+    let blockchainService: SUIBlockchainService
     private var cancellables = Set<AnyCancellable>()
     
     // 新增：增加 NFC 狀態的重試機制
@@ -27,13 +27,13 @@ class TransactionViewModel: ObservableObject {
         case failed
     }
     
-    init(nfcService: NFCService = NFCService(), 
-         zkLoginService: SUIZkLoginService = SUIZkLoginService()) {
+    init(nfcService: NFCService = NFCService(),
+         walletManager: ZkLoginWalletManager = ServiceContainer.shared.zkLoginWalletManager,
+         blockchainService: SUIBlockchainService = ServiceContainer.shared.blockchainService) {
         self.nfcService = nfcService
-        self.zkLoginService = zkLoginService
-        // 重要修改：將 zkLoginService 傳遞給 blockchainService
-        self.blockchainService = SUIBlockchainService(zkLoginService: zkLoginService)
-        
+        self.walletManager = walletManager
+        self.blockchainService = blockchainService
+
         setupBindings()
         checkWalletConnection()
         
@@ -74,15 +74,15 @@ class TransactionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Bind zkLogin service wallet address
-        zkLoginService.$walletAddress
+        // Bind walletManager wallet address
+        walletManager.$walletAddress
             .sink { [weak self] address in
                 self?.isWalletConnected = !address.isEmpty
             }
             .store(in: &cancellables)
         
-        // Bind zkLogin service authentication state
-        zkLoginService.$isAuthenticating
+        // Bind walletManager authentication state
+        walletManager.$isAuthenticating
             .sink { [weak self] isAuthenticating in
                 if isAuthenticating {
                     self?.transactionState = .authenticating
@@ -173,7 +173,7 @@ class TransactionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        zkLoginService.$errorMessage
+        walletManager.$errorMessage
             .compactMap { $0 }
             .sink { [weak self] message in
                 self?.errorMessage = message
@@ -184,21 +184,21 @@ class TransactionViewModel: ObservableObject {
     
     private func checkWalletConnection() {
         // Check if wallet is connected
-        isWalletConnected = !zkLoginService.walletAddress.isEmpty
+        isWalletConnected = !walletManager.walletAddress.isEmpty
     }
     
     func getWalletAddress() -> String {
-        return zkLoginService.walletAddress
+        return walletManager.walletAddress
     }
     
     func connectWallet() {
         errorMessage = nil
-        zkLoginService.startZkLoginAuthentication()
+        walletManager.signInWithGoogle()
         transactionState = .authenticating
     }
     
     func signOut() {
-        zkLoginService.signOut()
+        walletManager.signOut()
         isWalletConnected = false
         resetTransaction()
     }
@@ -252,7 +252,7 @@ class TransactionViewModel: ObservableObject {
         }
         
         // 確保發送者地址有效
-        if zkLoginService.walletAddress.isEmpty {
+        if walletManager.walletAddress.isEmpty {
             errorMessage = "尚未連接錢包或錢包地址無效"
             transactionState = .failed
             return
@@ -262,7 +262,7 @@ class TransactionViewModel: ObservableObject {
         let transaction = Transaction(
             recipientAddress: recipientAddressStr,
             amount: amount,
-            senderAddress: zkLoginService.walletAddress,
+            senderAddress: walletManager.walletAddress,
             coinType: coinType
         )
         

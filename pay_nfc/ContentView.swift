@@ -8,7 +8,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var viewModel = TransactionViewModel()
+    @StateObject private var viewModel: TransactionViewModel
+    
+    init() {
+        _viewModel = StateObject(wrappedValue: ServiceContainer.shared.createTransactionViewModel())
+    }
+    
     @State private var showNFCWrite = false
     @State private var lastReadRecipient: String? = nil
     @State private var lastReadAmount: String? = nil
@@ -203,7 +208,7 @@ struct ContentView: View {
             }
             .padding(.horizontal, 25)
             .sheet(isPresented: $showNFCWrite) {
-                NFCWriteView(nfcService: NFCService(), userAddress: viewModel.getWalletAddress())
+                NFCWriteView(nfcService: viewModel.nfcService, userAddress: viewModel.getWalletAddress())
             }
         }
     }

@@ -26,16 +26,16 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
     private let jwtKey = "zkLoginJWT"
     private let ephemeralKeyKey = "zkLoginEphemeralKey"
     
-    // 新增：引用 SUIZkLoginService 實例
-    private var zkLoginService: SUIZkLoginService?
-    
+    // 原: 引用 SUIZkLoginService 實例
+    private var zkLoginWalletManager: ZkLoginWalletManager?
+
     // 初始化方法
-    init(zkLoginService: SUIZkLoginService? = nil) {
-        self.zkLoginService = zkLoginService
+    init(zkLoginWalletManager: ZkLoginWalletManager? = nil) {
+        self.zkLoginWalletManager = zkLoginWalletManager
         super.init()
         setupSuiProvider()
         loadUserData()
-        
+
         // 監聽認證完成通知
         NotificationCenter.default.addObserver(
             self,
@@ -44,24 +44,24 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
             object: nil
         )
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     // 處理認證完成通知
     @objc private func handleAuthenticationCompleted(_ notification: Notification) {
         print("收到認證完成通知，更新錢包地址")
-        
-        // 如果有 zkLoginService，使用它的地址
-        if let zkLoginService = zkLoginService {
-            self.walletAddress = zkLoginService.walletAddress
-            print("從 zkLoginService 取得地址: \(self.walletAddress)")
+
+        // 如果有 zkLoginWalletManager，使用它的地址
+        if let manager = zkLoginWalletManager {
+            self.walletAddress = manager.walletAddress
+            print("從 zkLoginWalletManager 取得地址: \(self.walletAddress)")
         }
-        
+
         // 重新加載用戶數據
         loadUserData()
-        
+
         // 嘗試初始化錢包
         do {
             try initializeWallet()
@@ -86,11 +86,11 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         do {
             // 修改: 使用測試網而非主網
             provider = SuiProvider(network: .testnet)
-            
+
             // If we have a stored address, we'll use it
             // Otherwise, we'll need to authenticate with zkLogin
             if walletAddress.isEmpty {
-                // We'll initialize the wallet after zkLogin authentication
+                // We'll initialize the wallet after walletManager 認證
             } else {
                 // For testing purposes, we can create a wallet
                 // In production, this would use the zkLogin credentials
@@ -147,7 +147,7 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         print("初始化 SUI 錢包...")
 
         // 優先使用 zkLoginService 的憑證（如果可用）
-        if let zkLoginService = zkLoginService, !zkLoginService.walletAddress.isEmpty {
+        if let zkLoginService = zkLoginWalletManager, !zkLoginService.walletAddress.isEmpty {
             let zkWalletAddress = zkLoginService.walletAddress
             print("使用 zkLoginService 提供的地址: \(zkWalletAddress)")
             
@@ -219,7 +219,7 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
                 }
                 
                 signer = RawSigner(account: account, provider: provider)
-                print("✅ 成功使用本地存儲的 zkLogin 憑證創建簽名者")
+                print("✅ 成功使用本地存储的 zkLogin 憑證創建簽名者")
                 return
             } catch {
                 print("❌ 使用本地存儲的 zkLogin 憑證失敗: \(error)")
@@ -273,7 +273,7 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
             let redirectURI = "com.googleusercontent.apps.179459479770-aeoaa73k7savslnhbrru749l8jqcno6q:/oauth2redirect"
             let encodedRedirectURI = redirectURI.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? redirectURI
             
-            // 修正auth URL的格式和参数
+            // 修正auth URL的格式和參數
             let authURL = "https://accounts.google.com/o/oauth2/v2/auth"
             + "?client_id=\(clientId)"
             + "&redirect_uri=\(encodedRedirectURI)"
@@ -328,7 +328,7 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         // 登出Google账号
         GIDSignIn.sharedInstance.signOut()
         
-        // 清除本地存储的钱包信息
+        // 清除本地存儲的钱包信息
         walletAddress = ""
         userSalt = nil
         jwtToken = nil
@@ -345,44 +345,12 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
     }
     
     private func handleAuthCallback(url: URL) {
-        print("Handling auth callback with URL: \(url)")
-        
-        // For debugging - print the entire URL
-        print("Full callback URL: \(url.absoluteString)")
-        
-        // 從URL解析認證碼
-        guard let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let code = urlComponents.queryItems?.first(where: { $0.name == "code" })?.value else {
-            print("❌ 無法從回調URL中提取 code")
-            DispatchQueue.main.async {
-                self.errorMessage = "認證失敗：無法獲取 code"
-                self.isAuthenticating = false
-            }
-            return
-        }
-        
-        print("✅ 成功提取 code: \(code.prefix(15))...")
-        
-        // 如果有 zkLoginService，優先使用它處理認證流程
-        if let zkLoginService = zkLoginService {
-            print("✅ 將認證流程轉交給 zkLoginService 處理")
-            // 使用提取的 code 開始 Token 交換流程
-            DispatchQueue.main.async {
-                zkLoginService.exchangeCodeForToken(code: code)
-            }
-            return
-        }
-        
-        // 如果沒有 zkLoginService，使用備用方法
-        print("⚠️ 無可用的 zkLoginService，使用模擬方式完成認證")
-        
-        // 设置一个模拟的JWT token用于演示
-        self.jwtToken = "mock_jwt_token_" + generateSecureRandomString(length: 10)
-        
-        // 继续完成登录流程
+        // OAuth 回調由 GoogleSignIn 處理，這裡僅同步 walletAddress
         DispatchQueue.main.async {
-            print("开始模拟zkLogin完成过程...")
-            self.simulateZkLoginCompletion()
+            if let manager = self.zkLoginWalletManager {
+                self.walletAddress = manager.walletAddress
+            }
+            self.isAuthenticating = false
         }
     }
     
@@ -417,14 +385,14 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
     private func simulateZkLoginCompletion() {
         print("正在轉向使用真實的 zkLogin 流程...")
         
-        // 如果有 zkLoginService，優先使用它進行認證
-        if let zkLoginService = zkLoginService {
-            print("使用 zkLoginService 進行 zkLogin 認證")
-            zkLoginService.startZkLoginAuthentication()
+        // 如果有 zkLoginWalletManager，優先使用它進行認證
+        if let manager = zkLoginWalletManager {
+            print("使用 ZkLoginWalletManager 觸發登入流程")
+            manager.signInWithGoogle()
             return
         }
         
-        // 如果沒有 zkLoginService，則使用臨時解決方案
+        // 如果沒有 zkLoginWalletManager，則使用臨時解決方案
         print("⚠️ 未配置 zkLoginService，使用替代方案")
         
         // 生成用户盐值，如果尚未存在
