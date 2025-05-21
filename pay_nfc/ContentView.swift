@@ -8,23 +8,32 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var viewModel = TransactionViewModel()
+    @StateObject private var viewModel: TransactionViewModel
     @State private var showNFCWrite = false
     @State private var lastReadRecipient: String? = nil
     @State private var lastReadAmount: String? = nil
     @State private var showReadInfo: Bool = false
     @State private var copied: Bool = false
+    @State private var showGoogleSignIn = false
     
-    // 定義統一的顏色主題
+    // Access GoogleAuthService from ServiceContainer
+    @ObservedObject private var googleAuthService = ServiceContainer.shared.googleAuthService
+    
+    // Define unified color theme
     private let primaryColor = Color(red: 0.2, green: 0.5, blue: 0.9)
     private let secondaryColor = Color(red: 0.9, green: 0.5, blue: 0.2)
     private let backgroundColor = Color(red: 0.98, green: 0.98, blue: 1.0)
     private let cardBackgroundColor = Color.white
     
+    init() {
+        // Use ServiceContainer to create view model with injected dependencies
+        _viewModel = StateObject(wrappedValue: ServiceContainer.shared.createTransactionViewModel())
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
-                // 使用漸變背景
+                // Use gradient background
                 LinearGradient(
                     gradient: Gradient(colors: [backgroundColor, Color.white]),
                     startPoint: .top,
@@ -33,7 +42,7 @@ struct ContentView: View {
                 .edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 25) {
-                    // Logo 和標題區
+                    // Logo and title area
                     VStack(spacing: 12) {
                         ZStack {
                             Circle()
@@ -56,7 +65,7 @@ struct ContentView: View {
                         Text("SUI NFC PAY")
                             .font(.system(size: 18, weight: .semibold, design: .rounded))
                             .foregroundColor(Color(red: 0.3, green: 0.6, blue: 0.9))
-                            .tracking(2) // 增加字母間距
+                            .tracking(2) // Increase letter spacing
                             .padding(.top, -5)
                             .padding(.bottom, 2)
                         
@@ -67,20 +76,24 @@ struct ContentView: View {
                     }
                     .padding(.top, 40)
                     
-                    // 錢包狀態視圖
+                    // Google account button
+                    googleAccountButton
+                        .padding(.horizontal, 10)
+                    
+                    // Wallet status view
                     walletStatusView
                         .padding(.horizontal, 10)
                     
                     Spacer()
                     
-                    // 操作按鈕區域
+                    // Operation buttons area
                     if viewModel.isWalletConnected {
                         buttonSectionConnected
                     } else {
                         buttonSectionNotConnected
                     }
                     
-                    // NFC 標籤信息顯示區域
+                    // NFC tag info area
                     if showReadInfo {
                         nfcTagInfoView
                     }
@@ -89,7 +102,7 @@ struct ContentView: View {
                 }
                 .padding()
                 
-                // 交易狀態覆蓋視圖
+                // Transaction state overlay view
                 if viewModel.transactionState != .idle {
                     TransactionStateView(viewModel: viewModel)
                         .transition(.opacity)
@@ -107,20 +120,62 @@ struct ContentView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .sheet(isPresented: $showGoogleSignIn) {
+                GoogleSignInView(googleAuthService: googleAuthService)
+            }
         }
     }
+
+    // Google account button
+    private var googleAccountButton: some View {
+        Button(action: {
+            showGoogleSignIn = true
+        }) {
+            HStack {
+                // Icon based on sign-in status
+                Image(systemName: googleAuthService.isSignedIn ? "g.circle.fill" : "g.circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(googleAuthService.isSignedIn ? .blue : .gray)
+                
+                VStack(alignment: .leading) {
+                    if googleAuthService.isSignedIn {
+                        Text("Signed in as")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(googleAuthService.userName)
+                            .font(.footnote)
+                            .foregroundColor(.primary)
+                    } else {
+                        Text("Sign in with Google (optional)")
+                            .font(.footnote)
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(12)
+            .background(Color.gray.opacity(0.05))
+            .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
     
-    // 連接按鈕區域
+    // Connect button area
     private var buttonSectionNotConnected: some View {
         VStack(spacing: 20) {
             Button(action: {
                 viewModel.connectWallet()
             }) {
                 HStack {
-                    Image(systemName: "person.crop.circle.badge.checkmark")
+                    Image(systemName: "faceid")
                         .font(.system(size: 20))
                     
-                    Text("Connect with zkLogin")
+                    Text("Connect Wallet")
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                 }
                 .frame(maxWidth: .infinity)
@@ -140,10 +195,10 @@ struct ContentView: View {
         }
     }
     
-    // 已連接時的按鈕區域
+    // Buttons when connected
     private var buttonSectionConnected: some View {
         VStack(spacing: 20) {
-            // 掃描按鈕
+            // Scan button
             Button(action: {
                 viewModel.startNFCScan()
                 // Listen for NFC read result with a slight delay to allow NFCService to update
@@ -177,7 +232,7 @@ struct ContentView: View {
             }
             .padding(.horizontal, 25)
             
-            // 寫入按鈕
+            // Write button
             Button(action: {
                 showNFCWrite = true
             }) {
@@ -208,7 +263,7 @@ struct ContentView: View {
         }
     }
     
-    // NFC 標籤信息顯示
+    // NFC tag info display
     private var nfcTagInfoView: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -256,11 +311,11 @@ struct ContentView: View {
         .padding(.top, 10)
     }
     
-    // 錢包狀態視圖
+    // Wallet status view
     private var walletStatusView: some View {
         VStack(spacing: 15) {
             if viewModel.isWalletConnected {
-                // 已連接狀態
+                // Connected status
                 HStack {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundColor(.green)
@@ -272,14 +327,14 @@ struct ContentView: View {
                     
                     Spacer()
                     
-                    // 登出按鈕
+                    // Sign out button
                     Button(action: {
                         viewModel.signOut()
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                                 .font(.system(size: 12))
-                            Text("登出")
+                            Text("Sign Out")
                                 .font(.system(size: 12, weight: .medium))
                         }
                         .padding(.horizontal, 12)
@@ -294,12 +349,12 @@ struct ContentView: View {
                     .opacity(viewModel.transactionState == .authenticating ? 0.5 : 1)
                 }
                 
-                // 錢包地址顯示和複製
+                // Wallet address display and copy
                 let walletAddress = viewModel.getWalletAddress()
                 if !walletAddress.isEmpty {
                     VStack(spacing: 10) {
                         HStack {
-                            // 地址顯示
+                            // Address display
                             HStack {
                                 Image(systemName: "wallet.pass.fill")
                                     .foregroundColor(primaryColor.opacity(0.7))
@@ -316,12 +371,12 @@ struct ContentView: View {
                                     .fill(primaryColor.opacity(0.08))
                             )
                             
-                            // 複製按鈕
+                            // Copy button
                             Button(action: {
                                 copyToClipboard(walletAddress)
                             }) {
                                 ZStack {
-                                    // 漸變背景圓形
+                                    // Gradient background circle
                                     Circle()
                                         .fill(
                                             LinearGradient(
@@ -333,7 +388,7 @@ struct ContentView: View {
                                         .frame(width: 38, height: 38)
                                         .shadow(color: primaryColor.opacity(0.3), radius: 3, x: 0, y: 2)
                                     
-                                    // 閃光效果 - 當未複製時顯示
+                                    // Glow effect - show when not copied
                                     if !copied {
                                         Circle()
                                             .fill(Color.white.opacity(0.1))
@@ -349,12 +404,12 @@ struct ContentView: View {
                                             )
                                     }
                                     
-                                    // 內層發光圓形 - 提供深度感
+                                    // Inner glow circle - provides depth
                                     Circle()
                                         .fill(Color.white.opacity(0.15))
                                         .frame(width: 28, height: 28)
                                     
-                                    // 複製圖標
+                                    // Copy icon
                                     Image(systemName: "doc.on.doc.fill")
                                         .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(.white)
@@ -365,14 +420,14 @@ struct ContentView: View {
                             .buttonStyle(BorderlessButtonStyle())
                         }
                         
-                        // 複製成功提示
+                        // Copy success indicator
                         if copied {
                             HStack {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.green)
                                     .font(.system(size: 14))
                                 
-                                Text("地址已複製!")
+                                Text("Address copied!")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.green)
                             }
@@ -385,26 +440,26 @@ struct ContentView: View {
                             .transition(.scale.combined(with: .opacity))
                         }
                         
-                        // 操作提示
+                        // Action hint
                         HStack {
                             Image(systemName: "info.circle")
                                 .foregroundColor(primaryColor.opacity(0.7))
                                 .font(.system(size: 12))
                             
-                            Text("點擊複製按鈕可複製錢包地址")
+                            Text("Click the copy button to copy wallet address")
                                 .font(.system(size: 12))
                                 .foregroundColor(Color.black.opacity(0.5))
                         }
                     }
                 }
                 
-                // 錢包類型提示
+                // Wallet type indicator
                 HStack {
                     Image(systemName: "shield.lefthalf.filled")
                         .foregroundColor(primaryColor)
                         .font(.system(size: 14))
                     
-                    Text("SUI zkLogin Wallet")
+                    Text("SUI Local Wallet with FaceID")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(primaryColor)
                 }
@@ -416,7 +471,7 @@ struct ContentView: View {
                 )
                 .padding(.top, 4)
             } else {
-                // 未連接狀態
+                // Not connected status
                 VStack(spacing: 12) {
                     HStack {
                         Image(systemName: "exclamationmark.shield.fill")
@@ -428,7 +483,7 @@ struct ContentView: View {
                             .foregroundColor(.orange)
                     }
                     
-                    Text("Connect with zkLogin to continue")
+                    Text("Connect your wallet with Face ID to continue")
                         .font(.system(size: 16))
                         .foregroundColor(Color.black.opacity(0.5))
                 }
@@ -442,7 +497,7 @@ struct ContentView: View {
         )
     }
     
-    // 複製到剪貼板功能
+    // Copy to clipboard function
     private func copyToClipboard(_ text: String) {
         UIPasteboard.general.string = text
         

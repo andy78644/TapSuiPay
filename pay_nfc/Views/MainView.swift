@@ -8,15 +8,18 @@ struct MainView: View {
     @State private var copied = false
     @State private var showAddressCopiedToast = false
     
-    // 定義統一的顏色主題
+    // Access GoogleAuthService from ServiceContainer
+    @ObservedObject private var googleAuthService = ServiceContainer.shared.googleAuthService
+    
+    // Define unified color theme
     private let primaryColor = Color(red: 0.2, green: 0.5, blue: 0.9)
     private let secondaryColor = Color(red: 0.9, green: 0.5, blue: 0.2)
     private let backgroundColor = Color(red: 0.98, green: 0.98, blue: 1.0)
     private let cardBackgroundColor = Color.white
     
-    // 使用 init() 初始化 viewModel，確保使用 ServiceContainer 提供的服務
+    // Use init() to initialize viewModel, ensuring we use services provided by ServiceContainer
     init() {
-        // 使用 _StateObject 包裝器初始化 @StateObject 屬性
+        // Use _StateObject wrapper to initialize @StateObject property
         _viewModel = StateObject(wrappedValue: ServiceContainer.shared.createTransactionViewModel())
     }
     
@@ -44,11 +47,14 @@ struct MainView: View {
                             .font(.largeTitle)
                             .fontWeight(.bold)
                         
-                        Text("Zyra")
+                        Text("SUI NFC Pay")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                     .padding(.top, 50)
+                    
+                    // Google account status
+                    googleAccountStatus
                     
                     // Wallet Status
                     walletStatusView
@@ -97,8 +103,8 @@ struct MainView: View {
                             viewModel.connectWallet()
                         }) {
                             HStack {
-                                Image(systemName: "person.crop.circle.badge.checkmark")
-                                Text("Connect with zkLogin")
+                                Image(systemName: "wallet.pass.fill")
+                                Text("Connect Wallet")
                                     .fontWeight(.semibold)
                             }
                             .frame(maxWidth: .infinity)
@@ -136,20 +142,58 @@ struct MainView: View {
         }
     }
     
+    // Google account status view
+    private var googleAccountStatus: some View {
+        NavigationLink(destination: GoogleSignInView(googleAuthService: googleAuthService)) {
+            HStack {
+                // Icon based on sign-in status
+                Image(systemName: googleAuthService.isSignedIn ? "g.circle.fill" : "g.circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(googleAuthService.isSignedIn ? .blue : .gray)
+                
+                VStack(alignment: .leading) {
+                    if googleAuthService.isSignedIn {
+                        Text("Signed in as")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(googleAuthService.userName)
+                            .font(.footnote)
+                            .foregroundColor(.primary)
+                    } else {
+                        Text("Google account")
+                            .font(.footnote)
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(10)
+            .background(Color.gray.opacity(0.05))
+            .cornerRadius(8)
+            .padding(.horizontal, 20)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
     // Wallet Status View
     private var walletStatusView: some View {
         VStack(spacing: 8) {
             if viewModel.isWalletConnected {
-                // 已連接頭部
+                // Connected wallet header
                 walletConnectedHeader
                 
-                // 地址顯示和複製按鈕 - 重寫為明確的按鈕
+                // Address display and copy button
                 let address = viewModel.getWalletAddress()
                 if !address.isEmpty {
                     VStack(spacing: 5) {
-                        // 地址顯示區域和明確的複製按鈕
+                        // Address display area and copy button
                         HStack(spacing: 4) {
-                            // 地址文字
+                            // Address text
                             HStack {
                                 Text(address.prefix(6) + "..." + address.suffix(4))
                                     .font(.system(size: 16, weight: .medium))
@@ -162,9 +206,9 @@ struct MainView: View {
                                     .fill(Color.blue.opacity(0.1))
                             )
                             
-                            // 專用的複製按鈕
+                            // Copy button
                             Button(action: {
-                                print("複製按鈕被點擊")
+                                print("Copy button clicked")
                                 copyToClipboard(text: address)
                             }) {
                                 Image(systemName: "doc.on.doc.circle.fill")
@@ -178,12 +222,12 @@ struct MainView: View {
                             .buttonStyle(BorderlessButtonStyle())
                         }
                         
-                        // 複製成功的提示
+                        // Copy success indicator
                         if copied {
                             HStack {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.green)
-                                Text("地址已複製!")
+                                Text("Address copied!")
                                     .font(.caption)
                                     .foregroundColor(.green)
                                     .bold()
@@ -197,14 +241,14 @@ struct MainView: View {
                             .transition(.opacity)
                         }
                         
-                        Text("點擊複製按鈕可複製錢包地址")
+                        Text("Click the copy button to copy wallet address")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .padding(.top, 2)
                     }
                 }
             } else {
-                // 未連接顯示
+                // Not connected display
                 walletNotConnectedView
             }
         }
@@ -213,24 +257,24 @@ struct MainView: View {
         .cornerRadius(10)
     }
     
-    // 簡化的複製到剪貼簿功能
+    // Simplified copy to clipboard function
     private func copyToClipboard(text: String) {
-        print("開始執行複製操作: \(text)")
+        print("Starting copy operation: \(text)")
         
         #if canImport(UIKit)
         UIPasteboard.general.string = text
-        print("iOS 複製完成")
+        print("iOS copy completed")
         #elseif canImport(AppKit)
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
-        print("macOS 複製完成")
+        print("macOS copy completed")
         #endif
         
         withAnimation {
             copied = true
         }
         
-        // 延遲1.5秒後隱藏提示
+        // Hide the indicator after 1.5 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation {
                 copied = false
@@ -238,7 +282,7 @@ struct MainView: View {
         }
     }
     
-    // 已連接的錢包頭部視圖
+    // Connected wallet header view
     private var walletConnectedHeader: some View {
         HStack {
             Image(systemName: "checkmark.circle.fill")
@@ -249,14 +293,14 @@ struct MainView: View {
             
             Spacer()
             
-            // 登出按鈕
+            // Logout button
             Button(action: {
                 viewModel.signOut()
             }) {
                 HStack(spacing: 4) {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                         .font(.caption)
-                    Text("登出")
+                    Text("Sign Out")
                         .font(.caption)
                 }
                 .foregroundColor(.red)
@@ -268,7 +312,7 @@ struct MainView: View {
         }
     }
     
-    // 未連接錢包的顯示
+    // Not connected wallet display
     private var walletNotConnectedView: some View {
         VStack(spacing: 8) {
             HStack {
@@ -279,7 +323,7 @@ struct MainView: View {
                     .foregroundColor(.orange)
             }
             
-            Text("Connect with zkLogin to continue")
+            Text("Connect your wallet with Face ID to continue")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

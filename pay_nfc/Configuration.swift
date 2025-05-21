@@ -18,10 +18,10 @@ struct AppConfiguration {
         static let amountKey = "amount"
     }
     
-    // Authentication settings
+    // Authentication and wallet settings
     struct Auth {
         static let redirectScheme = "suipay"
-        static let saltStorageKey = "zkLoginUserSalt"
-        static let addressStorageKey = "zkLoginUserAddress"
+        static let walletStorageKey = "walletSecureData"
+        static let addressStorageKey = "walletAddress"
     }
 }

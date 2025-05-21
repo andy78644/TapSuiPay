@@ -1,5 +1,6 @@
 
-# Zyra - SUI NFC Transaction Application
+# Zyra - SU##You'll set up a secure wallet in the app protected by Face ID. This wallet holds your money and keeps it safe. Every time you pay, Face ID makes sure it's really you, so no one else can use your account.Getting Started
+You'll set up a wallet in the app protected by Face ID. This wallet holds your money and keeps it safe. Every time you pay, Face ID makes sure it's really you, so no one else can use your account.NFC Transaction Application
 
 Zyra is a payment app that makes sending money easy and safe using your phone. It uses NFC technology (like tapping your phone to pay) and the Sui blockchain to keep things fast and secure. Here’s how it works and why it’s useful:
 

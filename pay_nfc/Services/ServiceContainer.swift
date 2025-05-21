@@ -1,29 +1,45 @@
 import Foundation
+import SuiKit
 
-/// 服務容器類，負責創建和管理應用程式中的所有服務
+/// Service container class responsible for creating and managing all services in the application
 class ServiceContainer {
     static let shared = ServiceContainer()
     
-    // 所有服務
-    let zkLoginService: SUIZkLoginService
-    let blockchainService: SUIBlockchainService
+    // Configuration
+    private let network: SuiProvider.Network = .testnet
+    private let packageId: String = "0x..." // TODO: Replace with actual deployed package ID
+    private let registryObjectId: String = "0x..." // TODO: Replace with actual registry object ID
+    
+    // Services
+    let keychainManager: KeychainManager
+    let walletManager: WalletManager
+    let transactionService: TransactionService
+    let tapSuiPayService: TapSuiPayService
+    let googleAuthService: GoogleAuthService
     
     private init() {
-        // 初始化 zkLogin 服務
-        self.zkLoginService = SUIZkLoginService()
+        // Initialize services
+        self.keychainManager = KeychainManager.shared
+        self.walletManager = WalletManager(network: network, keychainManager: keychainManager)
+        self.transactionService = TransactionService(network: network, walletManager: walletManager)
+        self.tapSuiPayService = TapSuiPayService(
+            transactionService: transactionService,
+            packageId: packageId,
+            registryObjectId: registryObjectId
+        )
+        self.googleAuthService = GoogleAuthService()
         
-        // 將 zkLogin 服務傳遞給區塊鏈服務
-        self.blockchainService = SUIBlockchainService(zkLoginService: zkLoginService)
-        
-        print("ServiceContainer: 所有服務已初始化")
+        print("ServiceContainer: All services initialized")
     }
     
-    /// 創建一個新的交易視圖模型，並自動注入所需的服務
+    /// Creates a new transaction view model with injected services
     func createTransactionViewModel() -> TransactionViewModel {
         let nfcService = NFCService()
         return TransactionViewModel(
             nfcService: nfcService,
-            zkLoginService: zkLoginService
+            walletManager: walletManager,
+            transactionService: transactionService,
+            tapSuiPayService: tapSuiPayService
         )
     }
 }
