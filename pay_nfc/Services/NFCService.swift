@@ -515,7 +515,7 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                             DispatchQueue.main.async {
                                 print("Write success: \(payloadString)")
                                 // 寫入成功後不顯示持續的訊息
-                                self.nfcMessage = nil
+                                self.nfcMessage = "標籤寫入成功" // Changed from nil
                             }
                         }
                     }

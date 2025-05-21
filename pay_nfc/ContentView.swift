@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var lastReadAmount: String? = nil
     @State private var showReadInfo: Bool = false
     @State private var copied: Bool = false
+    @State private var showWriteSuccess: Bool = false // 新增：NFC寫入成功提示
     
     // 定義統一的顏色主題
     private let primaryColor = Color(red: 0.2, green: 0.5, blue: 0.9)
@@ -107,6 +108,14 @@ struct ContentView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            // 新增：NFC寫入成功提示
+            .alert(isPresented: $showWriteSuccess) {
+                Alert(
+                    title: Text("成功"),
+                    message: Text("NFC 標籤寫入成功！"),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
     }
     
@@ -184,7 +193,6 @@ struct ContentView: View {
                 HStack {
                     Image(systemName: "pencil.circle")
                         .font(.system(size: 20))
-                    
                     Text("Write NFC Tag")
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                 }
@@ -203,7 +211,14 @@ struct ContentView: View {
             }
             .padding(.horizontal, 25)
             .sheet(isPresented: $showNFCWrite) {
-                NFCWriteView(nfcService: NFCService(), userAddress: viewModel.getWalletAddress())
+                NFCWriteView(
+                    nfcService: NFCService(),
+                    userAddress: viewModel.getWalletAddress(),
+                    onWriteSuccess: {
+                        showNFCWrite = false
+                        showWriteSuccess = true
+                    }
+                )
             }
         }
     }
