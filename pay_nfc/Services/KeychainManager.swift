@@ -1,7 +1,6 @@
 import Foundation
 import LocalAuthentication
 import SuiKit
-import Bip39
 
 /// Provides secure storage for wallet information using the iOS Keychain with biometric protection
 class KeychainManager {
@@ -79,11 +78,9 @@ class KeychainManager {
             throw KeychainError.itemNotFound
         }
         
-        // Create mnemonic object
-        let mnemonic = try Mnemonic(mnemonic: mnemonicString.components(separatedBy: " "))
-        
         // Create wallet with mnemonic
-        return try Wallet(mnemonic: mnemonic)
+        let words = mnemonicString.components(separatedBy: " ")
+        return try Wallet(mnemonic: words)
     }
     
     /// Retrieves the stored wallet address without requiring the full wallet to be loaded

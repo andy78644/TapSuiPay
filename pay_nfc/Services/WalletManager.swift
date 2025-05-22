@@ -1,6 +1,5 @@
 import Foundation
 import SuiKit
-import Bip39
 import Combine
 import LocalAuthentication
 
@@ -70,8 +69,8 @@ class WalletManager: ObservableObject {
     /// - Throws: Errors from wallet import or storage
     func importWallet(mnemonic: String) throws -> Wallet {
         // Create wallet from mnemonic
-        let mnemonicObj = try Mnemonic(mnemonic: mnemonic.components(separatedBy: " "))
-        let wallet = try Wallet(mnemonic: mnemonicObj)
+        let words = mnemonic.components(separatedBy: " ")
+        let wallet = try Wallet(mnemonic: words)
         
         // Store the wallet securely
         try keychainManager.storeWallet(wallet)
