@@ -1,5 +1,6 @@
 import Foundation
 import SuiKit
+import Bip39
 import Combine
 import LocalAuthentication
 

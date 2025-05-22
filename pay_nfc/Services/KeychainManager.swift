@@ -1,6 +1,7 @@
 import Foundation
 import LocalAuthentication
 import SuiKit
+import Bip39
 
 /// Provides secure storage for wallet information using the iOS Keychain with biometric protection
 class KeychainManager {
