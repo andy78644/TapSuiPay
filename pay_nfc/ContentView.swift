@@ -82,31 +82,78 @@ struct ContentView: View {
                     // 新增：商家服務區塊
                     if viewModel.transactionState != .authenticating { // Point 1: Don't show during auth
                         if blockchainService.isUserLoggedIn && !blockchainService.walletAddress.isEmpty {
-                            Section(header: Text("商家服務").font(.headline)) {
+                            VStack(spacing: 15) {
                                 if let name = registeredMerchantName {
                                     HStack {
-                                        Text("已註冊商家:")
+                                        VStack(alignment: .leading) {
+                                            Text("商家服務")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                            Text("已註冊商家：\(name)")
+                                                .font(.headline)
+                                        }
                                         Spacer()
-                                        Text(name)
-                                            .foregroundColor(.secondary)
+                                        Button("查閱/管理") {
+                                            showingRegistrationSheet = true
+                                        }
+                                        .font(.callout)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(primaryColor.opacity(0.1))
+                                        .foregroundColor(primaryColor)
+                                        .cornerRadius(8)
                                     }
-                                    // Point 3: "管理我的商店" button removed for now
                                 } else {
-                                    Text("您尚未註冊商家名稱")
-                                        .foregroundColor(.gray)
-                                    Button("註冊我的商店") {
-                                        showingRegistrationSheet = true
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("商家服務")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                        Text("您尚未註冊任何商店。")
+                                            .font(.subheadline)
+                                        Button {
+                                            showingRegistrationSheet = true
+                                        } label: {
+                                            HStack {
+                                                Image(systemName: "building.2.fill")
+                                                Text("註冊您的商店")
+                                            }
+                                            .font(.headline)
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .background(secondaryColor)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(12)
+                                            .shadow(color: secondaryColor.opacity(0.3), radius: 4, y: 2)
+                                        }
                                     }
-                                    .padding(.top, 5)
                                 }
                             }
-                            .padding(.horizontal)
-                            .padding(.vertical, 10) // 增加一些垂直間距
-                        } else if !viewModel.isWalletConnected {
-                            // 只有在錢包未連接且不在驗證中時顯示提示登入使用商家服務
-                            Text("請先登入以使用商家服務")
-                                .padding()
-                                .foregroundColor(.gray)
+                            .padding(20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(cardBackgroundColor)
+                                    .shadow(color: Color.black.opacity(0.08), radius: 15, x: 0, y: 5)
+                            )
+                            .padding(.horizontal, 10) // Match walletStatusView's outer padding
+                        } else if !viewModel.isWalletConnected { // This implies user is not logged in
+                            VStack(spacing: 8) {
+                                Text("商家服務")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("請先連接錢包以查看或註冊商家。")
+                                    .font(.subheadline)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .padding(20)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(cardBackgroundColor.opacity(0.7))
+                                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 3)
+                            )
+                            .padding(.horizontal, 10) // Match walletStatusView's outer padding
                         }
                     }
                     
