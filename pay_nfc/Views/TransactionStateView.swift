@@ -136,22 +136,38 @@ struct TransactionStateView: View {
                     .background(Color.black.opacity(0.1))
                 
                 HStack {
-                    Image(systemName: "arrow.down.forward")
+                    Image(systemName: "storefront") // Changed icon
                         .font(.system(size: 16))
                         .foregroundColor(primaryColor.opacity(0.7))
                     
-                    Text("至:")
+                    Text("商店名稱:") // Changed label
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(Color.black.opacity(0.7))
                     
                     Spacer()
                     
-                    Text(viewModel.currentTransaction?.recipientAddress.prefix(10) ?? "")
-                        .font(.system(size: 16, design: .monospaced))
-                        .foregroundColor(Color.black.opacity(0.6))
+                    Text(viewModel.currentTransaction?.recipient ?? "") // Changed to display recipient (merchant name)
+                        .font(.system(size: 16, design: .default)) // Use default design for name
+                        .foregroundColor(Color.black.opacity(0.8)) // Make it more prominent
+                }
+                
+                Divider()
+                    .background(Color.black.opacity(0.1))
+
+                HStack { // New section for Product Name
+                    Image(systemName: "tag") // Icon for product name
+                        .font(.system(size: 16))
+                        .foregroundColor(primaryColor.opacity(0.7))
                     
-                    Text("...")
-                        .foregroundColor(Color.black.opacity(0.6))
+                    Text("商品名稱:")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color.black.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Text(viewModel.currentTransaction?.merchant ?? "") // Display merchant (product name)
+                        .font(.system(size: 16, design: .default))
+                        .foregroundColor(Color.black.opacity(0.8))
                 }
                 
                 Divider()

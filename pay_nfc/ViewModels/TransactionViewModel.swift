@@ -217,8 +217,15 @@ class TransactionViewModel: ObservableObject {
     
     private func processTransactionData(_ data: [String: String]) {
         // 檢查必要欄位
-        guard let recipientAddressStr = data["recipient"] else {
-            errorMessage = "交易資料缺少收款人地址"
+        guard let recipientName = data["recipient"] else { // Changed from recipientAddressStr to recipientName for clarity
+            errorMessage = "交易資料缺少商家名稱"
+            transactionState = .failed
+            return
+        }
+        
+        // 新增：檢查商品名稱欄位
+        guard let merchantName = data["merchant"] else {
+            errorMessage = "交易資料缺少商品名稱"
             transactionState = .failed
             return
         }
@@ -244,12 +251,7 @@ class TransactionViewModel: ObservableObject {
             return
         }
         
-        // 檢查收款人地址格式
-        if recipientAddressStr.isEmpty || !isValidSuiAddress(recipientAddressStr) {
-            errorMessage = "收款人地址格式無效: \(recipientAddressStr)"
-            transactionState = .failed
-            return
-        }
+        // 移除了對 recipientName (原 recipientAddressStr) 的 SUI 地址驗證，因為它現在是商家名稱
         
         // 確保發送者地址有效
         if zkLoginService.walletAddress.isEmpty {
@@ -259,11 +261,16 @@ class TransactionViewModel: ObservableObject {
         }
         
         // 創建交易對象
+        // 注意: recipientAddress 現在需要一個實際的SUI地址來進行鏈上交易。
+        // NFC只提供了商家名稱 (recipientName)。這裡使用一個佔位符。
+        // 實際應用中，可能需要從後端獲取商家SUI地址，或商家有一個固定的收款地址。
         let transaction = Transaction(
-            recipientAddress: recipientAddressStr,
+            recipientAddress: "0xPLACEHOLDER_MERCHANT_SUI_ADDRESS", // Placeholder for actual transaction recipient
             amount: amount,
             senderAddress: zkLoginService.walletAddress,
-            coinType: coinType
+            coinType: coinType,
+            recipient: recipientName, // Assign parsed merchant name
+            merchant: merchantName    // Assign parsed product name
         )
         
         currentTransaction = transaction

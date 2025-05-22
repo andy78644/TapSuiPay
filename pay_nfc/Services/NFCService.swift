@@ -76,7 +76,7 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         }
     }
     // MARK: - NFC Writing
-    func startWriting(recipient: String, amount: String, coinType: String = "SUI") {
+    func startWriting(recipient: String, merchant: String, amount: String, coinType: String = "SUI") { // Added merchant parameter
         // 檢查會話是否已經在運行中
         guard !isSessionActive else {
             DispatchQueue.main.async {
@@ -97,7 +97,7 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                 session = nil
             }
             
-            let payloadString = "recipient=\(recipient)&amount=\(amount)&coinType=\(coinType)"
+            let payloadString = "recipient=\(recipient)&merchant=\(merchant)&amount=\(amount)&coinType=\(coinType)" // Added merchant to payload
             writePayload = payloadString
             session = NFCNDEFReaderSession(delegate: self, queue: DispatchQueue.global(), invalidateAfterFirstRead: false)
             session?.alertMessage = "Hold your iPhone near the NFC tag to write transaction info"
@@ -279,23 +279,41 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         var payload: String = ""
         
         switch record.typeNameFormat {
-        case .absoluteURI, .nfcWellKnown:
-            // Skip first byte (length of the status byte) for Well Known type
-            let payloadData: Data
-            if record.typeNameFormat == .nfcWellKnown {
-                payloadData = record.payload.advanced(by: 1)
+        case .nfcWellKnown:
+            // Specifically handle RTD_TEXT (Well Known Type "T")
+            if record.type == Data("T".utf8) {
+                guard !record.payload.isEmpty else {
+                    session.invalidate(errorMessage: "NFC 文字記錄酬載為空。")
+                    return
+                }
+                let statusByte = record.payload[0]
+                let langCodeLength = Int(statusByte & 0x3F) // 低6位元組是語言代碼長度
+
+                let textPayloadStartIndex = 1 + langCodeLength
+                guard record.payload.count >= textPayloadStartIndex else {
+                    session.invalidate(errorMessage: "NFC 文字記錄酬載格式錯誤（長度不足）。")
+                    return
+                }
+                
+                let textData = record.payload.subdata(in: textPayloadStartIndex..<record.payload.count)
+                if let payloadString = String(data: textData, encoding: .utf8) {
+                    payload = payloadString
+                } else {
+                    session.invalidate(errorMessage: "無法解碼 NFC 文字資料 (UTF-8)。")
+                    return
+                }
             } else {
-                payloadData = record.payload
+                // 處理其他非預期的 Well Known Types
+                let typeString = String(data: record.type, encoding: .utf8) ?? "未知類型"
+                print("⚠️ 讀取到非預期的 NFC Well Known Type: \\(typeString)")
+                session.invalidate(errorMessage: "不支援的 NFC 標籤內容（非文字記錄）。")
+                return
             }
-            
-            if let payloadString = String(data: payloadData, encoding: .utf8) {
+        case .absoluteURI:
+            if let payloadString = String(data: record.payload, encoding: .utf8) {
                 payload = payloadString
             } else {
-                // 解碼失敗時不顯示錯誤訊息
-                DispatchQueue.main.async {
-                    self.resetNFCState()  // 使用重置方法，確保清除所有狀態
-                }
-                session.invalidate()
+                session.invalidate(errorMessage: "無法解碼 NFC URI 資料 (UTF-8)。")
                 return
             }
             
@@ -305,7 +323,9 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             } else {
                 // 解碼失敗時不顯示錯誤訊息
                 DispatchQueue.main.async {
-                    self.resetNFCState()
+                    self.resetNFCState() // 維持原有的重置邏輯
+                    // resetNFCState 會將 nfcMessage 設為 nil，如果需要特定訊息，要在之後設定
+                    // self.nfcMessage = "無法解碼 NFC Media Type 資料" // 例如
                 }
                 session.invalidate()
                 return
@@ -314,13 +334,14 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         default:
             // 不支援的格式時不顯示錯誤訊息
             DispatchQueue.main.async {
-                self.resetNFCState()
+                self.resetNFCState() // 維持原有的重置邏輯
             }
             session.invalidate()
             return
         }
         
         // Successfully read the payload, now parse it
+        print("ℹ️ 提取用於解析的酬載: \"\\(payload)\"")
         parseTransactionData(from: payload)
         
         // Close the session with success message but不顯示持續的訊息
@@ -329,7 +350,7 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     }
     
     private func parseTransactionData(from payload: String) {
-        // Example format: "recipient=address123&amount=10.5&coinType=SUI"
+        // Example format: "recipient=MerchantName&merchant=ItemName&amount=10.5&coinType=SUI" // Updated example format
         // 首先檢查 payload 是否為空
         guard !payload.isEmpty else {
             DispatchQueue.main.async {
@@ -347,7 +368,7 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         var data = [String: String]()
         var hasValidData = false
         
-        // 1. 嘗試標準格式解析 (recipient=xxx&amount=yyy&coinType=zzz)
+        // 1. 嘗試標準格式解析 (recipient=xxx&merchant=yyy&amount=zzz&coinType=aaa) // Updated comment
         let standardPairs = payload.components(separatedBy: "&")
         for pair in standardPairs {
             let elements = pair.components(separatedBy: "=")
@@ -363,15 +384,20 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             }
         }
         
-        // 2. 如果沒有找到標準格式的資料，嘗試查找任何可能的收款地址格式
+        // 2. 如果沒有找到標準格式的資料，嘗試查找任何可能的收款地址格式 (現在是商家名稱)
+        // 注意：由於 recipient 現在是商家名稱，原先的 0x 地址正則表達式可能不再適用或需要調整。
+        // 這裡我們假設商家名稱不需要特定格式檢查，如果需要，請告知。
         if !hasValidData || data["recipient"] == nil {
-            // 嘗試查找 0x 開頭的地址字符串，這通常是一個 SUI 地址
-            if let addressMatch = payload.range(of: "0x[0-9a-fA-F]{40,}", options: .regularExpression) {
-                let address = String(payload[addressMatch])
-                data["recipient"] = address
-                hasValidData = true
-                print("✅ 通過正則表達式找到收款地址: \(address)")
-            }
+            // 這裡可以根據商家名稱的可能格式添加備用解析邏輯
+            // 例如，如果 payload 中直接包含商家名稱，沒有 "recipient=" 前綴
+            // 但為了保持與寫入格式一致，我們主要依賴標準解析。
+            print("ℹ️ 未通過標準格式找到 recipient (商家名稱)")
+        }
+
+        // 新增: 嘗試查找商品名稱
+        if !hasValidData || data["merchant"] == nil {
+            // 這裡可以根據商品名稱的可能格式添加備用解析邏輯
+            print("ℹ️ 未通過標準格式找到 merchant (商品名稱)")
         }
         
         // 3. 嘗試查找金額
@@ -396,34 +422,36 @@ class NFCService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             // 日誌記錄解析結果
             print("📊 解析結果:")
             for (key, value) in data {
-                print("   \(key): \(value)")
+                print("   \\(key): \\(value)")
             }
             
             if hasValidData {
                 self.transactionData = data
-                
-                // 檢查是否包含必要的交易資訊
-                let hasMissingFields = data["recipient"] == nil || data["amount"] == nil
-                if !hasMissingFields {
-                    // 成功讀取訊息，但不設置持續顯示的訊息
-                    self.nfcMessage = nil
+                let missingRecipient = data["recipient"] == nil
+                let missingMerchant = data["merchant"] == nil
+                let missingAmount = data["amount"] == nil
+
+                if !missingRecipient && !missingMerchant && !missingAmount {
+                    // 所有必要欄位都存在
+                    // 根據現有邏輯，成功時不顯示持續訊息
+                    self.nfcMessage = nil 
+                    print("✅ NFC 標籤讀取成功且資料完整")
                 } else {
                     // 資料存在但缺少關鍵欄位
-                    let missingFields = [
-                        data["recipient"] == nil ? "recipient" : nil,
-                        data["amount"] == nil ? "amount" : nil
-                    ].compactMap { $0 }.joined(separator: ", ")
+                    var missingFieldsArray: [String] = []
+                    if missingRecipient { missingFieldsArray.append("商家名稱") }
+                    if missingMerchant { missingFieldsArray.append("商品名稱") }
+                    if missingAmount { missingFieldsArray.append("金額") }
+                    let missingFieldsText = missingFieldsArray.joined(separator: ", ")
                     
-                    print("❌ 缺少關鍵欄位: \(missingFields)")
-                    // 不設置錯誤訊息，防止彈出視窗持續顯示
-                    self.nfcMessage = nil
+                    print("❌ 缺少關鍵欄位: \\(missingFieldsText)")
+                    self.nfcMessage = "NFC 標籤資料不完整，缺少: \\(missingFieldsText)"
                 }
             } else {
                 // 沒有找到任何有效的鍵值對
                 self.transactionData = nil
                 print("❌ 無法解析 NFC 標籤內容")
-                // 不設置錯誤訊息
-                self.nfcMessage = nil
+                self.nfcMessage = "無法解析 NFC 標籤內容"
             }
             self.isScanning = false
             self.isSessionActive = false

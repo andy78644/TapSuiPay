@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NFCWriteView: View {
     @State private var recipient: String = ""
+    @State private var merchant: String = "" // Added merchant state variable
     @State private var amount: String = ""
     @State private var selectedCoinType: CoinType = .SUI
     @ObservedObject var nfcService: NFCService
@@ -91,12 +92,34 @@ struct NFCWriteView: View {
                         HStack {
                             Image(systemName: "person.crop.circle")
                                 .foregroundColor(primaryColor)
-                            Text("收款地址")
+                            Text("商家名稱") // Changed from "收款地址"
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(Color.black.opacity(0.7))
                         }
                         
-                        TextField("收款錢包地址", text: $recipient)
+                        TextField("收款商家名稱", text: $recipient) // Changed placeholder
+                            .font(.system(size: 16))
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                            )
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                    }
+                    
+                    // New TextField for Merchant
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "cart.fill") // Example icon for merchant
+                                .foregroundColor(primaryColor)
+                            Text("商品名稱")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color.black.opacity(0.7))
+                        }
+                        
+                        TextField("商品名稱", text: $merchant)
                             .font(.system(size: 16))
                             .padding()
                             .background(
@@ -229,6 +252,7 @@ struct NFCWriteView: View {
                     hideKeyboard()
                     nfcService.startWriting(
                         recipient: recipient,
+                        merchant: merchant, // Added merchant argument
                         amount: amount,
                         coinType: selectedCoinType.rawValue
                     )
@@ -253,8 +277,8 @@ struct NFCWriteView: View {
                     .cornerRadius(16)
                     .shadow(color: secondaryColor.opacity(0.3), radius: 5, x: 0, y: 3)
                 }
-                .disabled(recipient.isEmpty || amount.isEmpty || nfcService.isScanning)
-                .opacity(recipient.isEmpty || amount.isEmpty || nfcService.isScanning ? 0.6 : 1)
+                .disabled(recipient.isEmpty || merchant.isEmpty || amount.isEmpty || nfcService.isScanning) // Added merchant to disabled condition
+                .opacity(recipient.isEmpty || merchant.isEmpty || amount.isEmpty || nfcService.isScanning ? 0.6 : 1) // Added merchant to opacity condition
                 .padding(.top, 10)
                 
                 // 取消按鈕
