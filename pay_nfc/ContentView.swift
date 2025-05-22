@@ -30,15 +30,16 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
-                // 使用漸變背景
+            ZStack { // Changed from VStack to ZStack
+                // Layer 1: Background
                 LinearGradient(
                     gradient: Gradient(colors: [backgroundColor, Color.white]),
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .edgesIgnoringSafeArea(.all)
-                
+
+                // Layer 2: Main content area
                 VStack(spacing: 25) {
                     // Logo 和標題區
                     VStack(spacing: 12) {
@@ -79,34 +80,34 @@ struct ContentView: View {
                         .padding(.horizontal, 10)
                     
                     // 新增：商家服務區塊
-                    // Directly use blockchainService.walletAddress and check for emptiness
-                    if blockchainService.isUserLoggedIn && !blockchainService.walletAddress.isEmpty {
-                        let walletAddress = blockchainService.walletAddress // Can assign to a local constant if needed for readability
-                        Section(header: Text("商家服務").font(.headline)) {
-                            if let name = registeredMerchantName {
-                                HStack {
-                                    Text("已註冊商家:")
-                                    Spacer()
-                                    Text(name)
-                                        .foregroundColor(.secondary)
+                    if viewModel.transactionState != .authenticating { // Point 1: Don't show during auth
+                        if blockchainService.isUserLoggedIn && !blockchainService.walletAddress.isEmpty {
+                            Section(header: Text("商家服務").font(.headline)) {
+                                if let name = registeredMerchantName {
+                                    HStack {
+                                        Text("已註冊商家:")
+                                        Spacer()
+                                        Text(name)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    // Point 3: "管理我的商店" button removed for now
+                                } else {
+                                    Text("您尚未註冊商家名稱")
+                                        .foregroundColor(.gray)
+                                    Button("註冊我的商店") {
+                                        showingRegistrationSheet = true
+                                    }
+                                    .padding(.top, 5)
                                 }
-                            } else {
-                                Text("您尚未註冊商家名稱")
-                                    .foregroundColor(.gray)
                             }
-                            
-                            Button(registeredMerchantName == nil ? "註冊我的商店" : "管理我的商店") {
-                                showingRegistrationSheet = true
-                            }
-                            .padding(.top, 5)
+                            .padding(.horizontal)
+                            .padding(.vertical, 10) // 增加一些垂直間距
+                        } else if !viewModel.isWalletConnected {
+                            // 只有在錢包未連接且不在驗證中時顯示提示登入使用商家服務
+                            Text("請先登入以使用商家服務")
+                                .padding()
+                                .foregroundColor(.gray)
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 10) // 增加一些垂直間距
-                    } else if !viewModel.isWalletConnected {
-                        // 只有在錢包未連接時顯示提示登入使用商家服務，避免已登入但 blockchainService 狀態暫未同步時顯示
-                        Text("請先登入以使用商家服務")
-                            .padding()
-                            .foregroundColor(.gray)
                     }
                     
                     Spacer()
@@ -126,14 +127,14 @@ struct ContentView: View {
                     Spacer()
                 }
                 .padding()
-                
-                // 交易狀態覆蓋視圖
+
+                // Layer 3: Conditional TransactionStateView overlay
                 if viewModel.transactionState != .idle {
                     TransactionStateView(viewModel: viewModel)
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.transactionState)
                 }
-            }
+            } // End of ZStack
             .navigationBarHidden(true)
             .alert(item: Binding<AlertItem?>(
                 get: { viewModel.errorMessage != nil ? AlertItem(title: "Error", message: viewModel.errorMessage!) : nil }, // Add title: "Error"
@@ -238,38 +239,43 @@ struct ContentView: View {
             .padding(.horizontal, 25)
             
             // 寫入按鈕
-            Button(action: {
-                showNFCWrite = true
-            }) {
-                HStack {
-                    Image(systemName: "pencil.circle")
-                        .font(.system(size: 20))
-                    Text("Write NFC Tag")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [secondaryColor, secondaryColor.opacity(0.8)]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .foregroundColor(.white)
-                .cornerRadius(16)
-                .shadow(color: secondaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
-            }
-            .padding(.horizontal, 25)
-            .sheet(isPresented: $showNFCWrite) {
-                NFCWriteView(
-                    nfcService: NFCService(),
-                    userAddress: viewModel.getWalletAddress(),
-                    onWriteSuccess: {
-                        showNFCWrite = false
-                        showWriteSuccess = true
+            if registeredMerchantName != nil { // 只有在註冊商家後才顯示按鈕
+                Button(action: {
+                    showNFCWrite = true
+                }) {
+                    HStack {
+                        Image(systemName: "pencil.circle")
+                            .font(.system(size: 20))
+                        Text("Write NFC Tag")
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
                     }
-                )
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [secondaryColor, secondaryColor.opacity(0.8)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundColor(.white)
+                    .cornerRadius(16)
+                    .shadow(color: secondaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
+                }
+                .padding(.horizontal, 25)
+                .sheet(isPresented: $showNFCWrite) {
+                    NFCWriteView(
+                        nfcService: NFCService(), // 考慮是否需要共用 NFCService 實例
+                        userAddress: viewModel.getWalletAddress(), // 原始用途的 userAddress，可能仍需傳遞
+                        registeredMerchantName: registeredMerchantName, // 傳遞註冊的商家名稱
+                        onWriteSuccess: {
+                            showNFCWrite = false
+                            showWriteSuccess = true
+                        }
+                    )
+                    .environmentObject(merchantRegistryService) // 確保環境物件被傳遞
+                    .environmentObject(blockchainService)
+                }
             }
         }
     }

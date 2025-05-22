@@ -48,16 +48,20 @@ struct NFCWriteView: View {
     private let errorColor = Color(red: 0.9, green: 0.3, blue: 0.3)
     
     // 新增 callback 屬性
-    var onWriteSuccess: (() -> Void)? 
-    
+    var onWriteSuccess: (() -> Void)?
+    // 新增：用於接收註冊的商家名稱
+    let registeredMerchantName: String?
+
     // 初始化方法，接受用戶地址作為參數，並確保地址不為空
-    init(nfcService: NFCService, userAddress: String = "", onWriteSuccess: (() -> Void)? = nil) {
+    init(nfcService: NFCService, userAddress: String = "", registeredMerchantName: String? = nil, onWriteSuccess: (() -> Void)? = nil) {
         self.nfcService = nfcService
         self.blockchainService = ServiceContainer.shared.blockchainService
-        self._recipient = State(initialValue: userAddress.isEmpty ? "" : userAddress)
+        // 如果註冊的商家名稱存在，則用它初始化 recipient，否則用 userAddress
+        self._recipient = State(initialValue: registeredMerchantName ?? (userAddress.isEmpty ? "" : userAddress))
+        self.registeredMerchantName = registeredMerchantName
         self.onWriteSuccess = onWriteSuccess
     }
-    
+
     var body: some View {
         ZStack {
             // 背景
