@@ -11,6 +11,10 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
     @Published var transactionId: String?
     @Published var errorMessage: String?
     @Published var isAuthenticating: Bool = false
+
+    var isUserLoggedIn: Bool {
+        return !walletAddress.isEmpty && zkLoginService?.isUserLoggedIn() ?? false
+    }
     
     private var provider: SuiProvider?
     private var wallet: Wallet?
@@ -273,7 +277,7 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
             let redirectURI = "com.googleusercontent.apps.179459479770-aeoaa73k7savslnhbrru749l8jqcno6q:/oauth2redirect"
             let encodedRedirectURI = redirectURI.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? redirectURI
             
-            // 修正auth URL的格式和参数
+            // 修正auth URL的格式和參數
             let authURL = "https://accounts.google.com/o/oauth2/v2/auth"
             + "?client_id=\(clientId)"
             + "&redirect_uri=\(encodedRedirectURI)"
@@ -328,7 +332,7 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         // 登出Google账号
         GIDSignIn.sharedInstance.signOut()
         
-        // 清除本地存储的钱包信息
+        // 清除本地存儲的钱包信息
         walletAddress = ""
         userSalt = nil
         jwtToken = nil

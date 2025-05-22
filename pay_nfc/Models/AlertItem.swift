@@ -1,6 +1,7 @@
 import Foundation
 
 struct AlertItem: Identifiable {
-    let id = UUID()
-    let message: String
+    var id = UUID()
+    var title: String
+    var message: String
 }

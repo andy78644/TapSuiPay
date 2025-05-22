@@ -10,6 +10,10 @@ class SUIZkLoginService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     @Published var walletAddress: String = ""
     @Published var isAuthenticating: Bool = false
     @Published var errorMessage: String?
+
+    func isUserLoggedIn() -> Bool {
+        return !walletAddress.isEmpty && jwtToken != nil
+    }
     
     // zkLogin配置
     private let network: NetworkType = .testnet

@@ -11,6 +11,8 @@ import UIKit
 @main
 struct pay_nfcApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var serviceContainer = ServiceContainer()
+    @StateObject private var appConfig = AppConfig.shared // 假設您有 AppConfig
     
     init() {
         // 初始化 ServiceContainer，確保在應用啟動時就準備好所有服務
@@ -49,6 +51,11 @@ struct pay_nfcApp: App {
                     .preferredColorScheme(.light) // Force light mode
                     .background(Color.white) // Ensure white background
                     .whiteBackground() // Apply our custom modifier
+                    .environmentObject(serviceContainer.nfcService)
+                    .environmentObject(serviceContainer.blockchainService)
+                    .environmentObject(serviceContainer.zkLoginService)
+                    .environmentObject(serviceContainer.merchantRegistryService) // 注入新服務
+                    .environmentObject(appConfig)
                     .onOpenURL { url in
                     // Handle URL callbacks for OAuth
                     print("App received URL: \(url)")

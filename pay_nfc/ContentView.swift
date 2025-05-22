@@ -14,7 +14,13 @@ struct ContentView: View {
     @State private var lastReadAmount: String? = nil
     @State private var showReadInfo: Bool = false
     @State private var copied: Bool = false
-    @State private var showWriteSuccess: Bool = false // 新增：NFC寫入成功提示
+    @State private var showWriteSuccess: Bool = false
+    
+    @EnvironmentObject var merchantRegistryService: MerchantRegistryService
+    @EnvironmentObject var blockchainService: SUIBlockchainService
+    
+    @State private var registeredMerchantName: String?
+    @State private var showingRegistrationSheet = false
     
     // 定義統一的顏色主題
     private let primaryColor = Color(red: 0.2, green: 0.5, blue: 0.9)
@@ -24,7 +30,7 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
+            VStack {
                 // 使用漸變背景
                 LinearGradient(
                     gradient: Gradient(colors: [backgroundColor, Color.white]),
@@ -72,10 +78,41 @@ struct ContentView: View {
                     walletStatusView
                         .padding(.horizontal, 10)
                     
+                    // 新增：商家服務區塊
+                    // Directly use blockchainService.walletAddress and check for emptiness
+                    if blockchainService.isUserLoggedIn && !blockchainService.walletAddress.isEmpty {
+                        let walletAddress = blockchainService.walletAddress // Can assign to a local constant if needed for readability
+                        Section(header: Text("商家服務").font(.headline)) {
+                            if let name = registeredMerchantName {
+                                HStack {
+                                    Text("已註冊商家:")
+                                    Spacer()
+                                    Text(name)
+                                        .foregroundColor(.secondary)
+                                }
+                            } else {
+                                Text("您尚未註冊商家名稱")
+                                    .foregroundColor(.gray)
+                            }
+                            
+                            Button(registeredMerchantName == nil ? "註冊我的商店" : "管理我的商店") {
+                                showingRegistrationSheet = true
+                            }
+                            .padding(.top, 5)
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 10) // 增加一些垂直間距
+                    } else if !viewModel.isWalletConnected {
+                        // 只有在錢包未連接時顯示提示登入使用商家服務，避免已登入但 blockchainService 狀態暫未同步時顯示
+                        Text("請先登入以使用商家服務")
+                            .padding()
+                            .foregroundColor(.gray)
+                    }
+                    
                     Spacer()
                     
                     // 操作按鈕區域
-                    if viewModel.isWalletConnected {
+                    if viewModel.isWalletConnected { // 這裡的 viewModel.isWalletConnected 可能依賴 blockchainService.isUserLoggedIn
                         buttonSectionConnected
                     } else {
                         buttonSectionNotConnected
@@ -99,7 +136,7 @@ struct ContentView: View {
             }
             .navigationBarHidden(true)
             .alert(item: Binding<AlertItem?>(
-                get: { viewModel.errorMessage != nil ? AlertItem(message: viewModel.errorMessage!) : nil },
+                get: { viewModel.errorMessage != nil ? AlertItem(title: "Error", message: viewModel.errorMessage!) : nil }, // Add title: "Error"
                 set: { _ in viewModel.errorMessage = nil }
             )) { alertItem in
                 Alert(
@@ -115,6 +152,20 @@ struct ContentView: View {
                     message: Text("NFC 標籤寫入成功！"),
                     dismissButton: .default(Text("OK"))
                 )
+            }
+            .onAppear {
+                updateRegisteredMerchantName()
+            }
+            .onChange(of: blockchainService.walletAddress) { _ in
+                updateRegisteredMerchantName()
+            }
+            .onChange(of: blockchainService.isUserLoggedIn) { _ in
+                updateRegisteredMerchantName()
+            }
+            .sheet(isPresented: $showingRegistrationSheet, onDismiss: updateRegisteredMerchantName) {
+                MerchantRegistrationView()
+                    .environmentObject(merchantRegistryService)
+                    .environmentObject(blockchainService)
             }
         }
     }
@@ -471,8 +522,27 @@ struct ContentView: View {
             }
         }
     }
+    
+    private func updateRegisteredMerchantName() {
+        // Ensure walletAddress is not empty before trying to get merchant name
+        let address = blockchainService.walletAddress
+        if blockchainService.isUserLoggedIn && !address.isEmpty {
+            self.registeredMerchantName = merchantRegistryService.getMerchantName(for: address)
+        } else {
+            self.registeredMerchantName = nil
+        }
+    }
 }
 
 #Preview {
-    ContentView()
+    // For preview to work, you need to provide mock/dummy environment objects
+    // if they are not optional or have default initializers.
+    let mockBlockchainService = SUIBlockchainService(zkLoginService: SUIZkLoginService()) // Example
+    // mockBlockchainService.isUserLoggedIn = true // or false for different states
+    // mockBlockchainService.walletAddress = "0x123previewaddress"
+    
+    return ContentView()
+        .environmentObject(MerchantRegistryService()) // Add this for preview
+        .environmentObject(mockBlockchainService)      // Add this for preview
+        .environmentObject(NFCService(blockchainService: mockBlockchainService, zkLoginService: SUIZkLoginService())) // If TransactionViewModel needs it
 }

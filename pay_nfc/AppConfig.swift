@@ -1,7 +1,7 @@
 import Foundation
 
 /// Loads config values from Config.plist (which should be gitignored)
-class AppConfig {
+class AppConfig: ObservableObject { // Add ObservableObject conformance
     static let shared = AppConfig()
     private var config: [String: Any] = [:]
     private init() {
