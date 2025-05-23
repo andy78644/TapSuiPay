@@ -13,7 +13,19 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
     @Published var isAuthenticating: Bool = false
 
     var isUserLoggedIn: Bool {
-        return !walletAddress.isEmpty && zkLoginService?.isUserLoggedIn() ?? false
+        // 首先確認錢包地址不為空，這是基本條件
+        if walletAddress.isEmpty {
+            return false
+        }
+        
+        // 如果 zkLoginService 為 nil，只依賴錢包地址來判斷登入狀態
+        if zkLoginService == nil {
+            return true
+        }
+        
+        // 如果 zkLoginService 存在，則檢查 walletAddress 是否匹配
+        // 此處不再依賴 zkLoginService.isUserLoggedIn()，因為那需要 jwtToken 不為 nil
+        return true
     }
     
     private var provider: SuiProvider?
@@ -40,6 +52,15 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         setupSuiProvider()
         loadUserData()
         
+        // 如果提供了 zkLoginService，從中獲取最新的錢包地址（如果有）
+        if let zkLoginService = zkLoginService, !zkLoginService.walletAddress.isEmpty {
+            print("從提供的 zkLoginService 同步錢包地址: \(zkLoginService.walletAddress)")
+            self.walletAddress = zkLoginService.walletAddress
+            
+            // 保存地址到 UserDefaults 以確保一致性
+            UserDefaults.standard.set(walletAddress, forKey: addressKey)
+        }
+        
         // 監聽認證完成通知
         NotificationCenter.default.addObserver(
             self,
@@ -47,6 +68,22 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
             name: Notification.Name("AuthenticationCompleted"),
             object: nil
         )
+        
+        // 監聽 zkLoginService 的登入狀態變化
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleLoginStatusChanged(_:)),
+            name: Notification.Name("LoginStatusChanged"),
+            object: nil
+        )
+        
+        // 額外發送一次狀態變更通知，確保所有元件獲得最新狀態
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: Notification.Name("LoginStatusChanged"),
+                object: nil
+            )
+        }
     }
     
     deinit {
@@ -59,12 +96,24 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
         
         // 如果有 zkLoginService，使用它的地址
         if let zkLoginService = zkLoginService {
-            self.walletAddress = zkLoginService.walletAddress
-            print("從 zkLoginService 取得地址: \(self.walletAddress)")
+            if !zkLoginService.walletAddress.isEmpty {
+                self.walletAddress = zkLoginService.walletAddress
+                print("從 zkLoginService 取得地址: \(self.walletAddress)")
+                
+                // 確保同步存儲到 UserDefaults
+                UserDefaults.standard.set(walletAddress, forKey: addressKey)
+            } else {
+                print("警告: zkLoginService 的錢包地址為空")
+            }
+        } else {
+            print("警告: zkLoginService 為 nil，可能影響登入狀態判斷")
         }
         
         // 重新加載用戶數據
         loadUserData()
+        
+        // 發送額外通知，確保其他元件（例如 ContentView）知道登入狀態已變更
+        NotificationCenter.default.post(name: Notification.Name("LoginStatusChanged"), object: nil)
         
         // 嘗試初始化錢包
         do {
@@ -790,6 +839,37 @@ class SUIBlockchainService: NSObject, ObservableObject, ASWebAuthenticationPrese
             let characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
             return String((0..<length).map { _ in characters.randomElement()! })
         }
+    }
+    
+    // 處理登入狀態變更通知
+    @objc private func handleLoginStatusChanged(_ notification: Notification) {
+        print("SUIBlockchainService: 收到登入狀態變更通知")
+        
+        // 重新檢查 zkLoginService 的狀態
+        if let zkLoginService = zkLoginService {
+            print("zkLoginService 錢包地址: \(zkLoginService.walletAddress)")
+            
+            // 我們不再依賴 zkLoginService.isUserLoggedIn() 方法
+            // 改為直接檢查 zkLoginService 的錢包地址是否有效
+            
+            // 如果 zkLoginService 有有效地址，但我們的錢包地址為空或不相符，則更新我們的地址
+            if !zkLoginService.walletAddress.isEmpty && 
+               (self.walletAddress.isEmpty || self.walletAddress != zkLoginService.walletAddress) {
+                print("從 zkLoginService 更新錢包地址: \(zkLoginService.walletAddress)")
+                self.walletAddress = zkLoginService.walletAddress
+                UserDefaults.standard.set(walletAddress, forKey: addressKey)
+            }
+        }
+        
+        // 重新載入用戶數據以確保同步
+        loadUserData()
+        
+        // 檢查並報告目前的登入狀態
+        print("當前登入狀態檢查:")
+        print("- 有錢包地址: \(!walletAddress.isEmpty)")
+        print("- zkLoginService 不為 nil: \(zkLoginService != nil)")
+        print("- zkLoginService?.isUserLoggedIn(): \(zkLoginService?.isUserLoggedIn() ?? false)")
+        print("- 最終登入狀態: \(isUserLoggedIn)")
     }
 }
 

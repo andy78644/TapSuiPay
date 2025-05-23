@@ -126,12 +126,14 @@ struct MerchantRegistrationView: View {
                         .buttonStyle(.borderedProminent)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(UIColor.systemBackground).opacity(0.95))
+                    .background(Color(UIColor.systemBackground).opacity(0.95)) // 維持完成畫面的半透明背景
                     .edgesIgnoringSafeArea(.all)
                     .transition(.opacity.animation(.easeInOut))
                 }
             }
+            .whiteBackground() // 套用白色背景
         }
+        .whiteBackground() // 也對 NavigationView 套用，確保一致性
     }
 
     private func checkIfMerchantIsRegistered() {

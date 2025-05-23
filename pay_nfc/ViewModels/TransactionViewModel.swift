@@ -44,6 +44,14 @@ class TransactionViewModel: ObservableObject {
             name: Notification.Name("AuthenticationCompleted"),
             object: nil
         )
+        
+        // 添加对登入狀態變更通知的监听
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(loginStatusChanged),
+            name: Notification.Name("LoginStatusChanged"),
+            object: nil
+        )
     }
     
     deinit {
@@ -54,6 +62,13 @@ class TransactionViewModel: ObservableObject {
         DispatchQueue.main.async {
             print("收到认证完成通知，更新UI状态...")
             self.transactionState = .idle
+            self.checkWalletConnection()
+        }
+    }
+    
+    @objc private func loginStatusChanged() {
+        DispatchQueue.main.async {
+            print("收到登入狀態變更通知，檢查連接狀態...")
             self.checkWalletConnection()
         }
     }
@@ -74,10 +89,20 @@ class TransactionViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Bind zkLogin service wallet address
+        // Bind zkLogin service wallet address and login status
+        // 重要改進: 同時考慮錢包地址和登入狀態
         zkLoginService.$walletAddress
-            .sink { [weak self] address in
-                self?.isWalletConnected = !address.isEmpty
+            .combineLatest(blockchainService.$walletAddress)
+            .sink { [weak self] (zkAddress, blockchainAddress) in
+                // 選擇非空的地址，優先使用 blockchainService 的地址
+                let effectiveAddress = !blockchainAddress.isEmpty ? blockchainAddress : zkAddress
+                let isConnected = !effectiveAddress.isEmpty
+                
+                // 只有當狀態確實變化時才更新
+                if self?.isWalletConnected != isConnected {
+                    print("錢包連接狀態更新: \(isConnected ? "已連接" : "未連接"), 地址: \(effectiveAddress)")
+                    self?.isWalletConnected = isConnected
+                }
             }
             .store(in: &cancellables)
         
@@ -183,11 +208,38 @@ class TransactionViewModel: ObservableObject {
     }
     
     private func checkWalletConnection() {
-        // Check if wallet is connected
-        isWalletConnected = !zkLoginService.walletAddress.isEmpty
+        // 檢查錢包是否已連接，需要滿足兩個條件：
+        // 1. 有效的錢包地址
+        // 2. BlockchainService 認為用戶已經登入 (isUserLoggedIn)
+        let address = getWalletAddress()
+        let blockchainLoggedIn = blockchainService.isUserLoggedIn
+        
+        // 只有當地址非空且 blockchainService 報告用戶已登入時，才認為錢包已連接
+        let connected = !address.isEmpty && blockchainLoggedIn
+        
+        if isWalletConnected != connected {
+            print("checkWalletConnection: 更新錢包連接狀態 - \(connected ? "已連接" : "未連接")")
+            print("- 地址: \(address)")
+            print("- BlockchainService.isUserLoggedIn: \(blockchainLoggedIn)")
+            
+            // 更新連接狀態
+            isWalletConnected = connected
+            
+            // 發送通知，告知其他組件連接狀態已變更
+            NotificationCenter.default.post(
+                name: Notification.Name("WalletConnectionChanged"),
+                object: nil,
+                userInfo: ["isConnected": connected]
+            )
+        }
     }
     
     func getWalletAddress() -> String {
+        // 優先使用 blockchainService 的地址，因為它更可能是最新的
+        let blockchainAddress = blockchainService.walletAddress
+        if !blockchainAddress.isEmpty {
+            return blockchainAddress
+        }
         return zkLoginService.walletAddress
     }
     
@@ -198,9 +250,25 @@ class TransactionViewModel: ObservableObject {
     }
     
     func signOut() {
+        // 登出並清除狀態
         zkLoginService.signOut()
+        blockchainService.signOut() // 同時確保 blockchainService 也進行登出操作
+        
+        // 確保 isWalletConnected 會被更新，但我們實際上不需要手動設置它
+        // 因為它會通過我們的 binding 自動更新
+        // 不過為了確保立即生效，我們還是直接設置
         isWalletConnected = false
+        
+        // 重置交易狀態
         resetTransaction()
+        
+        // 發送額外的通知，確保所有相關組件都能知道登出事件
+        NotificationCenter.default.post(
+            name: Notification.Name("LoginStatusChanged"),
+            object: nil
+        )
+        
+        print("用戶已登出，所有狀態已重置")
     }
     
     func startNFCScan() {

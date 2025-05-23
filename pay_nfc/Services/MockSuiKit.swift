@@ -222,6 +222,34 @@ func decode(jwt: String) throws -> JWT {
     return try JWTDecode.decode(jwt: jwt)
 }
 
+// 模擬 zkLoginUtilities 類，與 SuiKit 中的對應
+class zkLoginUtilities {
+    static func jwtToAddress(jwt: String, userSalt: String) throws -> String {
+        // 解析 JWT，取出必要的信息
+        let decodedJWT = try JWTDecode.decode(jwt: jwt)
+        guard let sub = decodedJWT.claim(name: "sub").string else {
+            throw NSError(domain: "zkLoginUtilities", code: 1001, userInfo: [NSLocalizedDescriptionKey: "JWT 缺少 sub 聲明"])
+        }
+        
+        var audience = ""
+        if let aud = decodedJWT.claim(name: "aud").string {
+            audience = aud
+        } else if let auds = decodedJWT.claim(name: "aud").array as? [String], let firstAud = auds.first {
+            audience = firstAud
+        } else {
+            throw NSError(domain: "zkLoginUtilities", code: 1003, userInfo: [NSLocalizedDescriptionKey: "JWT 缺少有效的 aud 字段"])
+        }
+        
+        // 計算地址
+        let input = "sub:\(sub):\(audience):\(userSalt)"
+        let inputData = input.data(using: .utf8)!
+        let hash = SHA256.hash(data: inputData)
+        let hashString = hash.compactMap { String(format: "%02x", $0) }.joined()
+        
+        return "0x\(hashString.prefix(40))"
+    }
+}
+
 // 添加簡易的 SHA256 支持 (如果需要)
 import CryptoKit
 import JWTDecode // 添加 JWTDecode 依賴
